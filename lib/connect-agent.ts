@@ -1,12 +1,24 @@
 export const CONNECT_AGENT_TOOLS = [
-  { name: "list_models", description: "Browse models with pricing and context windows" },
+  {
+    name: "list_models",
+    description: "Browse models with pricing and context windows",
+  },
   { name: "eval_prompt", description: "Run a prompt against selected models" },
   { name: "eval_batch", description: "Run against all models in one call" },
   { name: "eval_suite", description: "Multi-test-case pass/fail matrix" },
   { name: "eval_rank", description: "Rank models by composite score" },
-  { name: "eval_consistency", description: "Detect flaky models with repeated runs" },
-  { name: "validate_output", description: "Check a response against JSON schema" },
-  { name: "suggest_system_prompt", description: "Auto-repair a failing system prompt" },
+  {
+    name: "eval_consistency",
+    description: "Detect flaky models with repeated runs",
+  },
+  {
+    name: "validate_output",
+    description: "Check a response against JSON schema",
+  },
+  {
+    name: "suggest_system_prompt",
+    description: "Auto-repair a failing system prompt",
+  },
 ] as const;
 
 export function getRequestOrigin(headers: Headers): string | undefined {
@@ -17,14 +29,19 @@ export function getRequestOrigin(headers: Headers): string | undefined {
     return undefined;
   }
 
-  const forwardedProto = headers.get("x-forwarded-proto")?.split(",")[0]?.trim();
-  const protocol = forwardedProto || (host.includes("localhost") || host.startsWith("127.") ? "http" : "https");
+  const forwardedProto = headers
+    .get("x-forwarded-proto")
+    ?.split(",")[0]
+    ?.trim();
+  const protocol =
+    forwardedProto ||
+    (host.includes("localhost") || host.startsWith("127.") ? "http" : "https");
 
   return `${protocol}://${host}`;
 }
 
 export function buildMcpUrl(origin?: string) {
-  return `${origin || "https://crv.sh"}/api/mcp`;
+  return `https://crv.sh/api/mcp`;
 }
 
 export function buildClientConfig(mcpUrl: string) {
@@ -46,7 +63,9 @@ export function buildClientConfig(mcpUrl: string) {
 }
 
 export function buildConnectAgentMarkdown(mcpUrl: string) {
-  const toolLines = CONNECT_AGENT_TOOLS.map((tool) => `- \`${tool.name}\`: ${tool.description}`);
+  const toolLines = CONNECT_AGENT_TOOLS.map(
+    (tool) => `- \`${tool.name}\`: ${tool.description}`,
+  );
   const skillUrl = new URL("/SKILL.md", mcpUrl).toString();
 
   return [
