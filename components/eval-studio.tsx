@@ -6,10 +6,8 @@ import {
   ChevronDown,
   CircleAlert,
   Download,
-
   LoaderCircle,
   Plus,
-
   Save,
   Scale,
   SendHorizontal,
@@ -60,12 +58,22 @@ type EvalStudioProps = {
   initialSelections: InitialModelSelection[];
 };
 
+function getOpenRouterAuthorizationHeaders(openRouterApiKey: string) {
+  const apiKey = openRouterApiKey.trim();
+  const headers = new Headers();
+  if (apiKey) {
+    headers.set("Authorization", `Bearer ${apiKey}`);
+  }
+  return headers;
+}
+
 function statusMeta(status: ModelResponse["status"]) {
   if (status === "done") {
     return {
       label: "Done",
       icon: CheckCircle2,
-      className: "text-[var(--success)] bg-[color:rgba(56,211,159,0.12)] ring-[color:rgba(56,211,159,0.24)]",
+      className:
+        "text-[var(--success)] bg-[color:rgba(56,211,159,0.12)] ring-[color:rgba(56,211,159,0.24)]",
     };
   }
 
@@ -73,7 +81,8 @@ function statusMeta(status: ModelResponse["status"]) {
     return {
       label: "Error",
       icon: CircleAlert,
-      className: "text-[var(--danger)] bg-[color:rgba(255,107,146,0.12)] ring-[color:rgba(255,107,146,0.24)]",
+      className:
+        "text-[var(--danger)] bg-[color:rgba(255,107,146,0.12)] ring-[color:rgba(255,107,146,0.24)]",
     };
   }
 
@@ -81,14 +90,16 @@ function statusMeta(status: ModelResponse["status"]) {
     return {
       label: "Streaming",
       icon: LoaderCircle,
-      className: "text-[var(--accent)] bg-[color:rgba(78,203,255,0.12)] ring-[color:rgba(78,203,255,0.24)]",
+      className:
+        "text-[var(--accent)] bg-[color:rgba(78,203,255,0.12)] ring-[color:rgba(78,203,255,0.24)]",
     };
   }
 
   return {
     label: "Queued",
     icon: LoaderCircle,
-    className: "text-[var(--muted-ink)] bg-[color:rgba(125,147,178,0.1)] ring-[color:rgba(125,147,178,0.22)]",
+    className:
+      "text-[var(--muted-ink)] bg-[color:rgba(125,147,178,0.1)] ring-[color:rgba(125,147,178,0.22)]",
   };
 }
 
@@ -99,11 +110,15 @@ function summarizeModel(model?: ModelOption) {
 
   const details = [];
   if (model.contextWindow) {
-    details.push(`${Intl.NumberFormat("en-US", { notation: "compact" }).format(model.contextWindow)} ctx`);
+    details.push(
+      `${Intl.NumberFormat("en-US", { notation: "compact" }).format(model.contextWindow)} ctx`,
+    );
   }
 
   if (model.inputCost !== undefined && model.outputCost !== undefined) {
-    details.push(`$${model.inputCost.toFixed(2)} / $${model.outputCost.toFixed(2)} per 1M`);
+    details.push(
+      `$${model.inputCost.toFixed(2)} / $${model.outputCost.toFixed(2)} per 1M`,
+    );
   }
 
   return details.join(" · ") || "OpenRouter";
@@ -113,20 +128,23 @@ function validationMeta(validation: ValidationState) {
   if (validation.status === "passed") {
     return {
       label: "Schema pass",
-      className: "text-[var(--success)] bg-[color:rgba(56,211,159,0.12)] ring-[color:rgba(56,211,159,0.24)]",
+      className:
+        "text-[var(--success)] bg-[color:rgba(56,211,159,0.12)] ring-[color:rgba(56,211,159,0.24)]",
     };
   }
 
   if (validation.status === "failed") {
     return {
       label: "Schema fail",
-      className: "text-[var(--danger)] bg-[color:rgba(255,107,146,0.12)] ring-[color:rgba(255,107,146,0.24)]",
+      className:
+        "text-[var(--danger)] bg-[color:rgba(255,107,146,0.12)] ring-[color:rgba(255,107,146,0.24)]",
     };
   }
 
   return {
     label: validation.message,
-    className: "text-[var(--muted-ink)] bg-[color:rgba(125,147,178,0.1)] ring-[color:rgba(125,147,178,0.22)]",
+    className:
+      "text-[var(--muted-ink)] bg-[color:rgba(125,147,178,0.1)] ring-[color:rgba(125,147,178,0.22)]",
   };
 }
 
@@ -188,35 +206,51 @@ type ResponseTableProps = {
   responses: ModelResponse[];
 };
 
-function CompareCheckbox({ turnId, responseKey, label }: { turnId: string; responseKey: string; label: string }) {
+function CompareCheckbox({
+  turnId,
+  responseKey,
+  label,
+}: {
+  turnId: string;
+  responseKey: string;
+  label: string;
+}) {
   const responseId = `${turnId}:${responseKey}`;
   const checked = useComparisonStore((s) => s.checkedResponses.has(responseId));
   const toggle = useComparisonStore((s) => s.toggleChecked);
   return (
     <input
-      type="checkbox"
+      type='checkbox'
       checked={checked}
       onChange={() => toggle(responseId)}
-      className="h-4 w-4 accent-[var(--accent-strong)]"
+      className='h-4 w-4 accent-[var(--accent-strong)]'
       aria-label={`Select ${label} for comparison`}
     />
   );
 }
 
-function CompareButton({ turnId, responseKeys }: { turnId: string; responseKeys: string[] }) {
+function CompareButton({
+  turnId,
+  responseKeys,
+}: {
+  turnId: string;
+  responseKeys: string[];
+}) {
   const checkedResponses = useComparisonStore((s) => s.checkedResponses);
   const openCompareDialog = useComparisonStore((s) => s.openCompareDialog);
-  const count = responseKeys.filter((key) => checkedResponses.has(`${turnId}:${key}`)).length;
+  const count = responseKeys.filter((key) =>
+    checkedResponses.has(`${turnId}:${key}`),
+  ).length;
 
   if (count < 2) return null;
 
   return (
     <button
-      type="button"
+      type='button'
       onClick={() => openCompareDialog(turnId)}
-      className="inline-flex min-h-9 items-center gap-1.5 rounded-full bg-[var(--accent)] px-3 py-1.5 text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-[var(--accent-foreground)] shadow-[0_10px_24px_rgba(29,176,243,0.22)] transition hover:bg-[var(--accent-strong)] active:scale-[0.98]"
+      className='inline-flex min-h-9 items-center gap-1.5 rounded-full bg-[var(--accent)] px-3 py-1.5 text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-[var(--accent-foreground)] shadow-[0_10px_24px_rgba(29,176,243,0.22)] transition hover:bg-[var(--accent-strong)] active:scale-[0.98]'
     >
-      <Scale aria-hidden="true" className="h-3.5 w-3.5" />
+      <Scale aria-hidden='true' className='h-3.5 w-3.5' />
       Compare ({count})
     </button>
   );
@@ -225,15 +259,25 @@ function CompareButton({ turnId, responseKeys }: { turnId: string; responseKeys:
 async function suggestPromptForResponse(turn: Turn, response: ModelResponse) {
   if (!canSuggestPrompt(response)) return;
 
-  const { systemPrompt, setPromptSuggestion, toggleResponseExpanded } = useEvalStore.getState();
+  const { systemPrompt, setPromptSuggestion, toggleResponseExpanded } =
+    useEvalStore.getState();
   const responseId = `${turn.id}:${response.key}`;
   setPromptSuggestion(responseId, { status: "loading" });
 
   try {
     const { openRouterApiKey } = useEvalStore.getState();
+    if (!openRouterApiKey.trim()) {
+      throw new Error(
+        "Missing OpenRouter API key. Send Authorization: Bearer <key>.",
+      );
+    }
+
     const suggestionResponse = await fetch("/api/suggest-system-prompt", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...getOpenRouterAuthorizationHeaders(openRouterApiKey),
+      },
       body: JSON.stringify({
         modelKey: response.key,
         systemPrompt,
@@ -242,38 +286,46 @@ async function suggestPromptForResponse(turn: Turn, response: ModelResponse) {
         responseContent: response.content || undefined,
         responseError: response.error,
         validationMessage:
-          response.validation.status === "failed" ? response.validation.message : undefined,
+          response.validation.status === "failed" ?
+            response.validation.message
+          : undefined,
         validationIssues:
-          response.validation.status === "failed" ? response.validation.issues : undefined,
-        openRouterApiKey: openRouterApiKey.trim() || undefined,
+          response.validation.status === "failed" ?
+            response.validation.issues
+          : undefined,
       }),
     });
 
-    const data = (await suggestionResponse.json().catch(() => null)) as
-      | { suggestedPrompt?: string; error?: string }
-      | null;
+    const data = (await suggestionResponse.json().catch(() => null)) as {
+      suggestedPrompt?: string;
+      error?: string;
+    } | null;
 
     if (!suggestionResponse.ok || !data?.suggestedPrompt) {
-      throw new Error(data?.error ?? "Failed to generate a suggested system prompt.");
+      throw new Error(
+        data?.error ?? "Failed to generate a suggested system prompt.",
+      );
     }
 
     toggleResponseExpanded(responseId);
-    setPromptSuggestion(responseId, { status: "ready", prompt: data.suggestedPrompt });
+    setPromptSuggestion(responseId, {
+      status: "ready",
+      prompt: data.suggestedPrompt,
+    });
   } catch (error) {
     setPromptSuggestion(responseId, {
       status: "error",
-      error: error instanceof Error ? error.message : "Failed to generate a suggested system prompt.",
+      error:
+        error instanceof Error ?
+          error.message
+        : "Failed to generate a suggested system prompt.",
     });
   }
 }
 
 const responseColumnHelper = createColumnHelper<ModelResponse>();
 
-function ResponseDataTable({
-  turn,
-  turnId,
-  responses,
-}: ResponseTableProps) {
+function ResponseDataTable({ turn, turnId, responses }: ResponseTableProps) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const toggleChecked = useComparisonStore((s) => s.toggleChecked);
   const expandedResponses = useEvalStore((s) => s.expandedResponses);
@@ -287,10 +339,17 @@ function ResponseDataTable({
         id: "select",
         header: "",
         enableSorting: false,
-        cell: ({ row }) => <CompareCheckbox turnId={turnId} responseKey={row.original.key} label={row.original.label} />,
+        cell: ({ row }) => (
+          <CompareCheckbox
+            turnId={turnId}
+            responseKey={row.original.key}
+            label={row.original.label}
+          />
+        ),
       }),
       responseColumnHelper.accessor(
-        (response) => `${response.providerName} ${response.label}`.toLowerCase(),
+        (response) =>
+          `${response.providerName} ${response.label}`.toLowerCase(),
         {
           id: "model",
           header: "Model",
@@ -298,65 +357,76 @@ function ResponseDataTable({
             const response = row.original;
 
             return (
-              <div className="min-w-0">
-                <div className="font-mono text-[0.7rem] uppercase tracking-[0.22em] text-[var(--muted-ink)]">
+              <div className='min-w-0'>
+                <div className='font-mono text-[0.7rem] uppercase tracking-[0.22em] text-[var(--muted-ink)]'>
                   {response.providerName}
                 </div>
-                <div className="mt-2 font-semibold text-[var(--ink)]">{response.label}</div>
+                <div className='mt-2 font-semibold text-[var(--ink)]'>
+                  {response.label}
+                </div>
               </div>
             );
           },
         },
       ),
-      responseColumnHelper.accessor((response) => responseStatusSortValue(response.status), {
-        id: "status",
-        header: "Status",
-        cell: ({ row }) => {
-          const response = row.original;
-          const meta = statusMeta(response.status);
-          const StatusIcon = meta.icon;
+      responseColumnHelper.accessor(
+        (response) => responseStatusSortValue(response.status),
+        {
+          id: "status",
+          header: "Status",
+          cell: ({ row }) => {
+            const response = row.original;
+            const meta = statusMeta(response.status);
+            const StatusIcon = meta.icon;
 
-          return (
-            <div
-              className={cn(
-                "inline-flex min-h-11 items-center gap-2 whitespace-nowrap rounded-full px-3 py-2 text-sm font-medium ring-1 ring-inset",
-                meta.className,
-              )}
-            >
-              <StatusIcon
-                aria-hidden="true"
-                className={cn("h-4 w-4", response.status === "streaming" ? "animate-spin" : "")}
-              />
-              {meta.label}
-            </div>
-          );
+            return (
+              <div
+                className={cn(
+                  "inline-flex min-h-11 items-center gap-2 whitespace-nowrap rounded-full px-3 py-2 text-sm font-medium ring-1 ring-inset",
+                  meta.className,
+                )}
+              >
+                <StatusIcon
+                  aria-hidden='true'
+                  className={cn(
+                    "h-4 w-4",
+                    response.status === "streaming" ? "animate-spin" : "",
+                  )}
+                />
+                {meta.label}
+              </div>
+            );
+          },
         },
-      }),
-      responseColumnHelper.accessor((response) => validationStatusSortValue(response.validation), {
-        id: "validation",
-        header: "Validation",
-        cell: ({ row }) => {
-          const validationChip = validationMeta(row.original.validation);
+      ),
+      responseColumnHelper.accessor(
+        (response) => validationStatusSortValue(response.validation),
+        {
+          id: "validation",
+          header: "Validation",
+          cell: ({ row }) => {
+            const validationChip = validationMeta(row.original.validation);
 
-          return (
-            <div
-              className={cn(
-                "inline-flex min-h-11 items-center whitespace-nowrap rounded-full px-3 py-2 text-sm font-medium ring-1 ring-inset",
-                validationChip.className,
-              )}
-            >
-              {validationChip.label}
-            </div>
-          );
+            return (
+              <div
+                className={cn(
+                  "inline-flex min-h-11 items-center whitespace-nowrap rounded-full px-3 py-2 text-sm font-medium ring-1 ring-inset",
+                  validationChip.className,
+                )}
+              >
+                {validationChip.label}
+              </div>
+            );
+          },
         },
-      }),
+      ),
       responseColumnHelper.accessor((response) => response.ttftMs, {
         id: "ttft",
         header: "TTFT",
         sortingFn: (left, right) =>
           compareNullableNumbers(left.original.ttftMs, right.original.ttftMs),
         cell: ({ row }) => (
-          <span className="whitespace-nowrap font-mono text-[var(--ink)]">
+          <span className='whitespace-nowrap font-mono text-[var(--ink)]'>
             {formatDuration(row.original.ttftMs)}
           </span>
         ),
@@ -365,9 +435,12 @@ function ResponseDataTable({
         id: "total",
         header: "Total",
         sortingFn: (left, right) =>
-          compareNullableNumbers(left.original.durationMs, right.original.durationMs),
+          compareNullableNumbers(
+            left.original.durationMs,
+            right.original.durationMs,
+          ),
         cell: ({ row }) => (
-          <span className="whitespace-nowrap font-mono text-[var(--ink)]">
+          <span className='whitespace-nowrap font-mono text-[var(--ink)]'>
             {formatDuration(row.original.durationMs)}
           </span>
         ),
@@ -376,9 +449,12 @@ function ResponseDataTable({
         id: "cost",
         header: "Cost",
         sortingFn: (left, right) =>
-          compareNullableNumbers(left.original.estimatedCost, right.original.estimatedCost),
+          compareNullableNumbers(
+            left.original.estimatedCost,
+            right.original.estimatedCost,
+          ),
         cell: ({ row }) => (
-          <span className="whitespace-nowrap font-mono text-[var(--ink)]">
+          <span className='whitespace-nowrap font-mono text-[var(--ink)]'>
             {formatUsd(row.original.estimatedCost)}
           </span>
         ),
@@ -387,9 +463,12 @@ function ResponseDataTable({
         id: "tokens",
         header: "Tokens",
         sortingFn: (left, right) =>
-          compareNullableNumbers(left.original.totalTokens, right.original.totalTokens),
+          compareNullableNumbers(
+            left.original.totalTokens,
+            right.original.totalTokens,
+          ),
         cell: ({ row }) => (
-          <span className="whitespace-nowrap font-mono text-[var(--ink)]">
+          <span className='whitespace-nowrap font-mono text-[var(--ink)]'>
             {formatTokenCount(row.original.totalTokens)}
           </span>
         ),
@@ -402,40 +481,43 @@ function ResponseDataTable({
           const response = row.original;
           const responseId = `${turnId}:${response.key}`;
           const isExpanded = Boolean(expandedResponses[responseId]);
-          const suggestionState = promptSuggestions[responseId] ?? { status: "idle" as const };
+          const suggestionState = promptSuggestions[responseId] ?? {
+            status: "idle" as const,
+          };
 
           return (
-            <div className="flex flex-wrap gap-2">
+            <div className='flex flex-wrap gap-2'>
               <button
-                type="button"
+                type='button'
                 onClick={() => onToggleExpanded(responseId)}
                 aria-expanded={isExpanded}
-               className="inline-flex min-h-11 items-center gap-2 whitespace-nowrap rounded-full border border-[var(--line)] bg-[var(--canvas-strong)] px-3 py-2 text-sm font-medium text-[var(--ink-soft)] transition hover:border-[var(--line-strong)] hover:bg-[color:rgba(17,31,53,0.96)]"
+                className='inline-flex min-h-11 items-center gap-2 whitespace-nowrap rounded-full border border-[var(--line)] bg-[var(--canvas-strong)] px-3 py-2 text-sm font-medium text-[var(--ink-soft)] transition hover:border-[var(--line-strong)] hover:bg-[color:rgba(17,31,53,0.96)]'
               >
                 <span>{isExpanded ? "Hide response" : "View response"}</span>
                 <ChevronDown
-                  aria-hidden="true"
+                  aria-hidden='true'
                   className={cn(
                     "h-4 w-4 transition-transform duration-180 ease-out",
                     isExpanded ? "rotate-180" : "",
                   )}
                 />
               </button>
-              {canSuggestPrompt(response) ? (
+              {canSuggestPrompt(response) ?
                 <button
-                  type="button"
+                  type='button'
                   onClick={() => void suggestPromptForResponse(turn, response)}
                   disabled={suggestionState.status === "loading"}
-                  className="inline-flex min-h-11 items-center gap-2 whitespace-nowrap rounded-full border border-[var(--line)] bg-[var(--panel-strong)] px-3 py-2 text-sm font-medium text-[var(--ink)] transition hover:border-[var(--line-strong)] hover:bg-[var(--canvas-strong)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-45"
+                  className='inline-flex min-h-11 items-center gap-2 whitespace-nowrap rounded-full border border-[var(--line)] bg-[var(--panel-strong)] px-3 py-2 text-sm font-medium text-[var(--ink)] transition hover:border-[var(--line-strong)] hover:bg-[var(--canvas-strong)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-45'
                 >
-                  {suggestionState.status === "loading" ? (
-                    <LoaderCircle aria-hidden="true" className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Sparkles aria-hidden="true" className="h-4 w-4" />
-                  )}
+                  {suggestionState.status === "loading" ?
+                    <LoaderCircle
+                      aria-hidden='true'
+                      className='h-4 w-4 animate-spin'
+                    />
+                  : <Sparkles aria-hidden='true' className='h-4 w-4' />}
                   Suggest new prompt
                 </button>
-              ) : null}
+              : null}
             </div>
           );
         },
@@ -455,56 +537,77 @@ function ResponseDataTable({
     isMultiSortEvent: (event) => {
       return Boolean(
         event &&
-          typeof event === "object" &&
-          "shiftKey" in event &&
-          (event as { shiftKey?: boolean }).shiftKey,
+        typeof event === "object" &&
+        "shiftKey" in event &&
+        (event as { shiftKey?: boolean }).shiftKey,
       );
     },
     maxMultiSortColCount: 4,
   });
 
   return (
-    <div className="mt-4 overflow-hidden rounded-[1.25rem] border border-[var(--line)] bg-[var(--panel-strong)] shadow-[var(--shadow-md)]">
-      <div className="border-b border-[var(--line)] bg-[linear-gradient(90deg,rgba(9,17,31,0.98),rgba(13,23,40,0.94))] px-4 py-3 font-mono text-[0.68rem] uppercase tracking-[0.18em] text-[var(--muted-ink)]">
+    <div className='mt-4 overflow-hidden rounded-[1.25rem] border border-[var(--line)] bg-[var(--panel-strong)] shadow-[var(--shadow-md)]'>
+      <div className='border-b border-[var(--line)] bg-[linear-gradient(90deg,rgba(9,17,31,0.98),rgba(13,23,40,0.94))] px-4 py-3 font-mono text-[0.68rem] uppercase tracking-[0.18em] text-[var(--muted-ink)]'>
         Shift-click headers to add more sort rules.
       </div>
-      <div className="overflow-x-auto">
-        <table className="min-w-full border-collapse text-left text-sm">
-          <thead className="bg-[color:rgba(9,17,31,0.9)] text-[var(--muted-ink)]">
+      <div className='overflow-x-auto'>
+        <table className='min-w-full border-collapse text-left text-sm'>
+          <thead className='bg-[color:rgba(9,17,31,0.9)] text-[var(--muted-ink)]'>
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
                   const canSort = header.column.getCanSort();
                   const sortState = header.column.getIsSorted();
-                  const sortIndex = sorting.findIndex((entry) => entry.id === header.column.id);
+                  const sortIndex = sorting.findIndex(
+                    (entry) => entry.id === header.column.id,
+                  );
 
                   return (
                     <th
                       key={header.id}
-                      className="px-4 py-3 font-mono text-[0.68rem] uppercase tracking-[0.18em]"
+                      className='px-4 py-3 font-mono text-[0.68rem] uppercase tracking-[0.18em]'
                     >
-                      {header.isPlaceholder ? null : canSort ? (
+                      {header.isPlaceholder ?
+                        null
+                      : canSort ?
                         <button
-                          type="button"
-                          onClick={(event) => header.column.toggleSorting(undefined, event.shiftKey)}
-                           className="inline-flex min-h-11 items-center gap-2 rounded-full px-3 py-2 text-left transition hover:bg-[color:rgba(17,31,53,0.82)]"
+                          type='button'
+                          onClick={(event) =>
+                            header.column.toggleSorting(
+                              undefined,
+                              event.shiftKey,
+                            )
+                          }
+                          className='inline-flex min-h-11 items-center gap-2 rounded-full px-3 py-2 text-left transition hover:bg-[color:rgba(17,31,53,0.82)]'
                         >
-                          <span>{flexRender(header.column.columnDef.header, header.getContext())}</span>
-                          {sortState ? (
-                             <span className="inline-flex items-center gap-1 rounded-full border border-[var(--line)] bg-[var(--canvas-strong)] px-2 py-1 text-[0.62rem] tracking-[0.16em] text-[var(--ink)]">
+                          <span>
+                            {flexRender(
+                              header.column.columnDef.header,
+                              header.getContext(),
+                            )}
+                          </span>
+                          {sortState ?
+                            <span className='inline-flex items-center gap-1 rounded-full border border-[var(--line)] bg-[var(--canvas-strong)] px-2 py-1 text-[0.62rem] tracking-[0.16em] text-[var(--ink)]'>
                               {sortIndex + 1}
                               <ChevronDown
-                                aria-hidden="true"
-                                className={cn("h-3.5 w-3.5", sortState === "asc" ? "rotate-180" : "")}
+                                aria-hidden='true'
+                                className={cn(
+                                  "h-3.5 w-3.5",
+                                  sortState === "asc" ? "rotate-180" : "",
+                                )}
                               />
                             </span>
-                          ) : (
-                            <ArrowUpDown aria-hidden="true" className="h-3.5 w-3.5" />
-                          )}
+                          : <ArrowUpDown
+                              aria-hidden='true'
+                              className='h-3.5 w-3.5'
+                            />
+                          }
                         </button>
-                      ) : (
-                        flexRender(header.column.columnDef.header, header.getContext())
-                      )}
+                      : flexRender(
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )
+                      }
                     </th>
                   );
                 })}
@@ -516,90 +619,111 @@ function ResponseDataTable({
               const response = row.original;
               const responseId = `${turnId}:${response.key}`;
               const isExpanded = Boolean(expandedResponses[responseId]);
-              const suggestionState = promptSuggestions[responseId] ?? { status: "idle" as const };
+              const suggestionState = promptSuggestions[responseId] ?? {
+                status: "idle" as const,
+              };
 
               return (
                 <Fragment key={row.id}>
-                  <tr className="border-t border-[var(--line)] align-top">
+                  <tr className='border-t border-[var(--line)] align-top'>
                     {row.getVisibleCells().map((cell) => (
-                      <td key={cell.id} className="px-4 py-4">
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      <td key={cell.id} className='px-4 py-4'>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext(),
+                        )}
                       </td>
                     ))}
                   </tr>
-                  {isExpanded ? (
-                    <tr className="border-t border-[var(--line)] bg-[color:rgba(6,11,20,0.76)]">
-                      <td colSpan={row.getVisibleCells().length} className="px-4 py-4">
-                        <div className="flex max-h-[26rem] overflow-y-auto rounded-[1.1rem] border border-[var(--line)] bg-[linear-gradient(180deg,rgba(10,18,31,0.98),rgba(13,23,40,0.98))] p-4">
-                          {response.error ? (
-                            <p className="whitespace-pre-wrap break-words text-sm leading-7 text-[var(--danger)]">
+                  {isExpanded ?
+                    <tr className='border-t border-[var(--line)] bg-[color:rgba(6,11,20,0.76)]'>
+                      <td
+                        colSpan={row.getVisibleCells().length}
+                        className='px-4 py-4'
+                      >
+                        <div className='flex max-h-[26rem] overflow-y-auto rounded-[1.1rem] border border-[var(--line)] bg-[linear-gradient(180deg,rgba(10,18,31,0.98),rgba(13,23,40,0.98))] p-4'>
+                          {response.error ?
+                            <p className='whitespace-pre-wrap break-words text-sm leading-7 text-[var(--danger)]'>
                               {response.error}
                             </p>
-                          ) : response.content ? (
+                          : response.content ?
                             <p
-                              aria-live={response.status === "streaming" ? "polite" : undefined}
-                              className="whitespace-pre-wrap break-words text-sm leading-7 text-[var(--ink)]"
+                              aria-live={
+                                response.status === "streaming" ?
+                                  "polite"
+                                : undefined
+                              }
+                              className='whitespace-pre-wrap break-words text-sm leading-7 text-[var(--ink)]'
                             >
                               {response.content}
                             </p>
-                          ) : (
-                            <div className="flex min-h-28 w-full items-center justify-center text-sm text-[var(--muted-ink)]">
+                          : <div className='flex min-h-28 w-full items-center justify-center text-sm text-[var(--muted-ink)]'>
                               Waiting for first token...
                             </div>
-                          )}
+                          }
                         </div>
-                        <div className="mt-4 flex flex-wrap gap-2 font-mono text-[0.68rem] uppercase tracking-[0.18em] text-[var(--muted-ink)]">
-                            <span className="rounded-full border border-[var(--line)] bg-[var(--canvas-strong)] px-3 py-2">
-                              prompt {formatTokenCount(response.promptTokens)}
-                            </span>
-                          <span className="rounded-full border border-[var(--line)] bg-[var(--canvas-strong)] px-3 py-2">
-                            completion {formatTokenCount(response.completionTokens)}
+                        <div className='mt-4 flex flex-wrap gap-2 font-mono text-[0.68rem] uppercase tracking-[0.18em] text-[var(--muted-ink)]'>
+                          <span className='rounded-full border border-[var(--line)] bg-[var(--canvas-strong)] px-3 py-2'>
+                            prompt {formatTokenCount(response.promptTokens)}
                           </span>
-                          {response.finishReason ? (
-                            <span className="rounded-full border border-[var(--line)] bg-[var(--canvas-strong)] px-3 py-2">
+                          <span className='rounded-full border border-[var(--line)] bg-[var(--canvas-strong)] px-3 py-2'>
+                            completion{" "}
+                            {formatTokenCount(response.completionTokens)}
+                          </span>
+                          {response.finishReason ?
+                            <span className='rounded-full border border-[var(--line)] bg-[var(--canvas-strong)] px-3 py-2'>
                               {response.finishReason}
                             </span>
-                          ) : null}
+                          : null}
                         </div>
-                        {response.validation.status === "failed" ? (
-                          <div className="mt-4 rounded-[1rem] border border-[color:rgba(255,107,146,0.18)] bg-[color:rgba(255,107,146,0.08)] p-3 text-sm leading-6 text-[var(--danger)]">
+                        {response.validation.status === "failed" ?
+                          <div className='mt-4 rounded-[1rem] border border-[color:rgba(255,107,146,0.18)] bg-[color:rgba(255,107,146,0.08)] p-3 text-sm leading-6 text-[var(--danger)]'>
                             {response.validation.issues.map((issue) => (
                               <p key={issue}>{issue}</p>
                             ))}
                           </div>
-                        ) : null}
-                        {suggestionState.status === "ready" && suggestionState.prompt ? (
-                          <div className="mt-4 rounded-[1rem] border border-[color:rgba(102,184,255,0.18)] bg-[color:rgba(102,184,255,0.08)] p-4">
-                            <div className="flex flex-wrap items-center justify-between gap-3">
+                        : null}
+                        {(
+                          suggestionState.status === "ready" &&
+                          suggestionState.prompt
+                        ) ?
+                          <div className='mt-4 rounded-[1rem] border border-[color:rgba(102,184,255,0.18)] bg-[color:rgba(102,184,255,0.08)] p-4'>
+                            <div className='flex flex-wrap items-center justify-between gap-3'>
                               <div>
-                                <p className="font-mono text-[0.68rem] uppercase tracking-[0.18em] text-[var(--info)]">
+                                <p className='font-mono text-[0.68rem] uppercase tracking-[0.18em] text-[var(--info)]'>
                                   Suggested system prompt
                                 </p>
-                                <p className="mt-1 text-sm leading-6 text-[var(--ink-soft)]">
-                                  Generated by the same model from its failed run.
+                                <p className='mt-1 text-sm leading-6 text-[var(--ink-soft)]'>
+                                  Generated by the same model from its failed
+                                  run.
                                 </p>
                               </div>
                               <button
-                                type="button"
-                                onClick={() => applySuggestedPrompt(suggestionState.prompt!)}
-                                className="inline-flex min-h-11 items-center justify-center rounded-full bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-[var(--accent-foreground)] transition hover:bg-[var(--accent-strong)] active:scale-[0.98]"
+                                type='button'
+                                onClick={() =>
+                                  applySuggestedPrompt(suggestionState.prompt!)
+                                }
+                                className='inline-flex min-h-11 items-center justify-center rounded-full bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-[var(--accent-foreground)] transition hover:bg-[var(--accent-strong)] active:scale-[0.98]'
                               >
                                 Use suggested prompt
                               </button>
                             </div>
-                            <div className="mt-3 max-h-64 overflow-y-auto rounded-[0.95rem] border border-[color:rgba(102,184,255,0.14)] bg-[color:rgba(6,11,20,0.62)] p-3 text-sm leading-7 text-[var(--ink)] whitespace-pre-wrap break-words">
+                            <div className='mt-3 max-h-64 overflow-y-auto rounded-[0.95rem] border border-[color:rgba(102,184,255,0.14)] bg-[color:rgba(6,11,20,0.62)] p-3 text-sm leading-7 text-[var(--ink)] whitespace-pre-wrap break-words'>
                               {suggestionState.prompt}
                             </div>
                           </div>
-                        ) : null}
-                        {suggestionState.status === "error" && suggestionState.error ? (
-                          <div className="mt-4 rounded-[1rem] border border-[color:rgba(255,184,106,0.18)] bg-[color:rgba(255,184,106,0.1)] p-3 text-sm leading-6 text-[var(--warning)]">
+                        : null}
+                        {(
+                          suggestionState.status === "error" &&
+                          suggestionState.error
+                        ) ?
+                          <div className='mt-4 rounded-[1rem] border border-[color:rgba(255,184,106,0.18)] bg-[color:rgba(255,184,106,0.1)] p-3 text-sm leading-6 text-[var(--warning)]'>
                             {suggestionState.error}
                           </div>
-                        ) : null}
+                        : null}
                       </td>
                     </tr>
-                  ) : null}
+                  : null}
                 </Fragment>
               );
             })}
@@ -655,6 +779,11 @@ export function EvalStudio({ catalog, initialSelections }: EvalStudioProps) {
 
   const importInputRef = useRef<HTMLInputElement>(null);
 
+  const [origin, setOrigin] = useState("");
+  useEffect(() => {
+    setOrigin(window.location.origin);
+  }, []);
+
   useEffect(() => {
     initModels(initialSelections);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -698,11 +827,17 @@ export function EvalStudio({ catalog, initialSelections }: EvalStudioProps) {
   };
 
   const selectedPreset = useMemo(
-    () => SYSTEM_PROMPT_LIBRARY.find((entry) => entry.id === selectedSystemPromptId),
+    () =>
+      SYSTEM_PROMPT_LIBRARY.find(
+        (entry) => entry.id === selectedSystemPromptId,
+      ),
     [selectedSystemPromptId],
   );
 
-  const parsedSchema = useMemo(() => parseJsonSchemaText(schemaText), [schemaText]);
+  const parsedSchema = useMemo(
+    () => parseJsonSchemaText(schemaText),
+    [schemaText],
+  );
   const hasSchema = schemaText.trim().length > 0;
   const schemaError = parsedSchema.ok ? null : parsedSchema.error;
   const schemaReady = !hasSchema || parsedSchema.ok;
@@ -735,21 +870,33 @@ export function EvalStudio({ catalog, initialSelections }: EvalStudioProps) {
   }, [catalog.models]);
 
   const canSubmit =
-    !isSubmitting && prompt.trim().length > 0 && selectedModels.length > 0 && schemaReady;
+    !isSubmitting &&
+    prompt.trim().length > 0 &&
+    selectedModels.length > 0 &&
+    schemaReady &&
+    openRouterApiKey.trim().length > 0;
   const hasTurns = turns.length > 0;
   const allCatalogModelsSelected =
     selectedModels.length === catalog.models.length &&
-    selectedModels.every((selection, index) => selection.modelKey === catalog.models[index]?.key);
+    selectedModels.every(
+      (selection, index) => selection.modelKey === catalog.models[index]?.key,
+    );
   const visiblePromptPills = selectedModels.slice(0, 5);
-  const hiddenPromptPillCount = Math.max(0, selectedModels.length - visiblePromptPills.length);
+  const hiddenPromptPillCount = Math.max(
+    0,
+    selectedModels.length - visiblePromptPills.length,
+  );
   const latestTurn = turns[turns.length - 1];
   const latestResponses = latestTurn ? Object.values(latestTurn.responses) : [];
-  const latestSuccessCount = latestResponses.filter(isSuccessfulResponse).length;
+  const latestSuccessCount =
+    latestResponses.filter(isSuccessfulResponse).length;
   const latestFailureCount = latestResponses.filter(
-    (response) => response.status === "error" || response.validation.status === "failed",
+    (response) =>
+      response.status === "error" || response.validation.status === "failed",
   ).length;
   const latestStreamingCount = latestResponses.filter(
-    (response) => response.status === "queued" || response.status === "streaming",
+    (response) =>
+      response.status === "queued" || response.status === "streaming",
   ).length;
 
   const addSelection = () => {
@@ -770,24 +917,33 @@ export function EvalStudio({ catalog, initialSelections }: EvalStudioProps) {
     useEvalStore.getState().removeSelection(id);
   };
 
-  const compareDialogTurn = compareDialogTurnId
-    ? turns.find((t) => t.id === compareDialogTurnId) ?? null
+  const compareDialogTurn =
+    compareDialogTurnId ?
+      (turns.find((t) => t.id === compareDialogTurnId) ?? null)
     : null;
-  const compareDialogResponses = compareDialogTurn
-    ? Object.values(compareDialogTurn.responses).filter((r) =>
+  const compareDialogResponses =
+    compareDialogTurn ?
+      Object.values(compareDialogTurn.responses).filter((r) =>
         checkedResponses.has(`${compareDialogTurn.id}:${r.key}`),
       )
     : [];
 
   const submitPrompt = async () => {
     const trimmedPrompt = prompt.trim();
-    if (!trimmedPrompt || isSubmitting || selectedModels.length === 0 || !schemaReady) {
+    if (
+      !trimmedPrompt ||
+      isSubmitting ||
+      selectedModels.length === 0 ||
+      !schemaReady ||
+      !openRouterApiKey.trim()
+    ) {
       return;
     }
 
     const turnId = createId("turn");
-    const turnValidator = hasSchema
-      ? {
+    const turnValidator =
+      hasSchema ?
+        {
           label: selectedPreset?.name ?? "Custom schema",
           schemaText,
         }
@@ -804,8 +960,12 @@ export function EvalStudio({ catalog, initialSelections }: EvalStudioProps) {
             providerName: model?.providerName ?? selection.providerId,
             content: "",
             status: "queued" as const,
-            validation: turnValidator
-              ? { status: "unavailable" as const, message: "Awaiting final JSON" }
+            validation:
+              turnValidator ?
+                {
+                  status: "unavailable" as const,
+                  message: "Awaiting final JSON",
+                }
               : { status: "unavailable" as const, message: "No schema" },
           },
         ];
@@ -835,28 +995,32 @@ export function EvalStudio({ catalog, initialSelections }: EvalStudioProps) {
 
     const parsedTimeout = parseFloat(timeoutSeconds);
     const timeoutMs =
-      !Number.isNaN(parsedTimeout) && parsedTimeout > 0
-        ? Math.round(parsedTimeout * 1000)
-        : undefined;
+      !Number.isNaN(parsedTimeout) && parsedTimeout > 0 ?
+        Math.round(parsedTimeout * 1000)
+      : undefined;
 
     try {
       const response = await fetch("/api/eval", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          ...getOpenRouterAuthorizationHeaders(openRouterApiKey),
         },
         body: JSON.stringify({
           systemPrompt,
           prompt: trimmedPrompt,
           history: historyPayload,
-          selectedModels: selectedModels.map((selection) => ({ key: selection.modelKey })),
+          selectedModels: selectedModels.map((selection) => ({
+            key: selection.modelKey,
+          })),
           timeoutMs,
-          openRouterApiKey: openRouterApiKey.trim() || undefined,
         }),
       });
 
       if (!response.ok || !response.body) {
-        const data = (await response.json().catch(() => null)) as { error?: string } | null;
+        const data = (await response.json().catch(() => null)) as {
+          error?: string;
+        } | null;
         throw new Error(data?.error ?? "Request failed.");
       }
 
@@ -913,7 +1077,8 @@ export function EvalStudio({ catalog, initialSelections }: EvalStudioProps) {
         flushEvents();
       }
     } catch (error) {
-      const message = error instanceof Error ? error.message : "The request failed.";
+      const message =
+        error instanceof Error ? error.message : "The request failed.";
       setTurns((current) => markTurnErrors(current, turnId, message));
     } finally {
       setIsSubmitting(false);
@@ -921,64 +1086,86 @@ export function EvalStudio({ catalog, initialSelections }: EvalStudioProps) {
   };
 
   return (
-    <main id="main-content" className="min-h-screen overflow-x-hidden bg-[var(--page-bg)] text-[var(--ink)]">
-      <div className="mx-auto flex min-h-screen w-full max-w-[1560px] flex-col px-4 py-4 sm:px-6 lg:px-8 lg:py-8">
-        <section className="relative overflow-hidden rounded-[2rem] border border-[var(--line)] bg-[var(--hero-bg)] px-6 py-8 shadow-[var(--shadow-lg)] sm:px-8 lg:px-10">
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(78,203,255,0.14),transparent_34%),radial-gradient(circle_at_85%_18%,rgba(93,122,255,0.16),transparent_24%),linear-gradient(180deg,rgba(255,255,255,0.02),transparent_100%)]" />
-          <div className="pointer-events-none absolute inset-y-0 right-[-8%] w-[44%] bg-[linear-gradient(180deg,rgba(78,203,255,0.12),rgba(78,203,255,0))] blur-3xl" />
-          <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-            <div className="max-w-3xl space-y-4">
-              <span className="inline-flex min-h-11 items-center rounded-full border border-[var(--line)] bg-[color:rgba(10,18,31,0.74)] px-4 py-2 font-mono text-[0.72rem] uppercase tracking-[0.24em] text-[var(--accent)] shadow-[0_0_0_1px_rgba(78,203,255,0.05)]">
-                AI Lab Command Center
+    <main
+      id='main-content'
+      className='min-h-screen overflow-x-hidden bg-[var(--page-bg)] text-[var(--ink)]'
+    >
+      <div className='mx-auto flex min-h-screen w-full max-w-[1560px] flex-col px-4 py-4 sm:px-6 lg:px-8 lg:py-8'>
+        <section className='relative overflow-hidden rounded-[2rem] border border-[var(--line)] bg-[var(--hero-bg)] px-6 py-8 shadow-[var(--shadow-lg)] sm:px-8 lg:px-10'>
+          <div className='pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(78,203,255,0.14),transparent_34%),radial-gradient(circle_at_85%_18%,rgba(93,122,255,0.16),transparent_24%),linear-gradient(180deg,rgba(255,255,255,0.02),transparent_100%)]' />
+          <div className='pointer-events-none absolute inset-y-0 right-[-8%] w-[44%] bg-[linear-gradient(180deg,rgba(78,203,255,0.12),rgba(78,203,255,0))] blur-3xl' />
+          <div className='relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between'>
+            <div className='max-w-3xl space-y-4'>
+              <span className='inline-flex min-h-11 items-center rounded-full border border-[var(--line)] bg-[color:rgba(10,18,31,0.74)] px-4 py-2 font-mono text-[0.72rem] uppercase tracking-[0.24em] text-[var(--accent)] shadow-[0_0_0_1px_rgba(78,203,255,0.05)]'>
+                crv.sh
               </span>
-              <div className="space-y-3">
-                <h1 className="max-w-3xl text-4xl font-semibold tracking-[-0.04em] text-[var(--ink)] sm:text-5xl lg:text-6xl">
-                  Run multi-model evals in a live dark-room console.
+              <div className='space-y-3'>
+                <h1 className='max-w-3xl text-4xl font-semibold tracking-[-0.04em] text-[var(--ink)] sm:text-5xl lg:text-6xl'>
+                  Stay ahead of the curve.
                 </h1>
-                <p className="max-w-2xl text-base leading-7 text-[var(--ink-soft)] sm:text-lg">
-                  Configure the roster, pin one shared instruction set, and monitor latency, token burn, schema health, and failure recovery from a single operator surface.
+                <p className='max-w-2xl text-base leading-7 text-[var(--ink-soft)] sm:text-lg'>
+                  Compare, rank, and validate. Run multi-model evals with live
+                  latency, cost tracking, and schema health — from a single
+                  surface.
                 </p>
               </div>
             </div>
-            <div className="grid gap-3 sm:grid-cols-3 lg:min-w-[420px]">
-              <div className="rounded-3xl border border-[var(--line)] bg-[color:rgba(10,18,31,0.7)] p-4 shadow-[0_0_0_1px_rgba(78,203,255,0.04)] backdrop-blur">
-                <div className="font-mono text-[0.7rem] uppercase tracking-[0.22em] text-[var(--muted-ink)]">Models</div>
-                <div className="mt-2 text-3xl font-semibold tracking-[-0.04em]">{selectedModels.length}</div>
+            <div className='grid gap-3 sm:grid-cols-3 lg:min-w-[420px]'>
+              <div className='rounded-3xl border border-[var(--line)] bg-[color:rgba(10,18,31,0.7)] p-4 shadow-[0_0_0_1px_rgba(78,203,255,0.04)] backdrop-blur'>
+                <div className='font-mono text-[0.7rem] uppercase tracking-[0.22em] text-[var(--muted-ink)]'>
+                  Models
+                </div>
+                <div className='mt-2 text-3xl font-semibold tracking-[-0.04em]'>
+                  {selectedModels.length}
+                </div>
               </div>
-              <div className="rounded-3xl border border-[var(--line)] bg-[color:rgba(10,18,31,0.7)] p-4 shadow-[0_0_0_1px_rgba(78,203,255,0.04)] backdrop-blur">
-                <div className="font-mono text-[0.7rem] uppercase tracking-[0.22em] text-[var(--muted-ink)]">Catalog</div>
-                <div className="mt-2 text-3xl font-semibold tracking-[-0.04em]">{catalog.models.length}</div>
+              <div className='rounded-3xl border border-[var(--line)] bg-[color:rgba(10,18,31,0.7)] p-4 shadow-[0_0_0_1px_rgba(78,203,255,0.04)] backdrop-blur'>
+                <div className='font-mono text-[0.7rem] uppercase tracking-[0.22em] text-[var(--muted-ink)]'>
+                  Catalog
+                </div>
+                <div className='mt-2 text-3xl font-semibold tracking-[-0.04em]'>
+                  {catalog.models.length}
+                </div>
               </div>
-              <div className="rounded-3xl border border-[var(--line)] bg-[color:rgba(10,18,31,0.7)] p-4 shadow-[0_0_0_1px_rgba(78,203,255,0.04)] backdrop-blur">
-                <div className="font-mono text-[0.7rem] uppercase tracking-[0.22em] text-[var(--muted-ink)]">Turns</div>
-                <div className="mt-2 text-3xl font-semibold tracking-[-0.04em]">{turns.length}</div>
+              <div className='rounded-3xl border border-[var(--line)] bg-[color:rgba(10,18,31,0.7)] p-4 shadow-[0_0_0_1px_rgba(78,203,255,0.04)] backdrop-blur'>
+                <div className='font-mono text-[0.7rem] uppercase tracking-[0.22em] text-[var(--muted-ink)]'>
+                  Turns
+                </div>
+                <div className='mt-2 text-3xl font-semibold tracking-[-0.04em]'>
+                  {turns.length}
+                </div>
               </div>
             </div>
           </div>
         </section>
 
-        <section className="mt-6 grid flex-1 gap-6 lg:grid-cols-[340px_minmax(0,1fr)] 2xl:grid-cols-[380px_minmax(0,1fr)]">
-          <aside className="space-y-6 lg:sticky lg:top-8 lg:self-start">
-            <div className="rounded-[1.75rem] border border-[var(--line)] bg-[var(--panel)] p-5 shadow-[var(--shadow-md)] backdrop-blur">
-              <div className="flex items-start justify-between gap-3">
+        <section className='mt-6 grid flex-1 gap-6 lg:grid-cols-[340px_minmax(0,1fr)] 2xl:grid-cols-[380px_minmax(0,1fr)]'>
+          <aside className='space-y-6 lg:sticky lg:top-8 lg:self-start'>
+            <div className='rounded-[1.75rem] border border-[var(--line)] bg-[var(--panel)] p-5 shadow-[var(--shadow-md)] backdrop-blur'>
+              <div className='flex items-start justify-between gap-3'>
                 <div>
-                  <p className="font-mono text-[0.72rem] uppercase tracking-[0.22em] text-[var(--muted-ink)]">
+                  <p className='font-mono text-[0.72rem] uppercase tracking-[0.22em] text-[var(--muted-ink)]'>
                     System prompt
                   </p>
-                  <h2 className="mt-2 text-xl font-semibold tracking-[-0.03em]">Shared instructions</h2>
+                  <h2 className='mt-2 text-xl font-semibold tracking-[-0.03em]'>
+                    Shared instructions
+                  </h2>
                 </div>
-                <Sparkles aria-hidden="true" className="mt-1 h-5 w-5 text-[var(--accent-strong)]" />
+                <Sparkles
+                  aria-hidden='true'
+                  className='mt-1 h-5 w-5 text-[var(--accent-strong)]'
+                />
               </div>
-              <div className="mt-4 grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
-                <label className="grid gap-2 text-sm font-medium">
+              <div className='mt-4 grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end'>
+                <label className='grid gap-2 text-sm font-medium'>
                   <span>Prompt library</span>
                   <select
                     value={selectedSystemPromptId}
                     onChange={(event) => applyPreset(event.target.value)}
-                    name="systemPromptLibrary"
-                    className="min-h-12 rounded-2xl border border-[var(--line)] bg-[var(--canvas-strong)] px-4 text-base text-[var(--ink)] outline-none transition"
+                    name='systemPromptLibrary'
+                    className='min-h-12 rounded-2xl border border-[var(--line)] bg-[var(--canvas-strong)] px-4 text-base text-[var(--ink)] outline-none transition'
                   >
-                    <option value="">Custom prompt</option>
+                    <option value=''>Custom prompt</option>
                     {SYSTEM_PROMPT_LIBRARY.map((preset) => (
                       <option key={preset.id} value={preset.id}>
                         {preset.name}
@@ -987,38 +1174,40 @@ export function EvalStudio({ catalog, initialSelections }: EvalStudioProps) {
                   </select>
                 </label>
                 <button
-                  type="button"
+                  type='button'
                   onClick={resetConfig}
-                   className="inline-flex min-h-12 items-center justify-center rounded-full border border-[var(--line)] bg-[var(--panel-strong)] px-4 py-2 text-sm font-medium text-[var(--ink)] transition hover:border-[var(--line-strong)] hover:bg-[var(--canvas-strong)] active:scale-[0.98]"
+                  className='inline-flex min-h-12 items-center justify-center rounded-full border border-[var(--line)] bg-[var(--panel-strong)] px-4 py-2 text-sm font-medium text-[var(--ink)] transition hover:border-[var(--line-strong)] hover:bg-[var(--canvas-strong)] active:scale-[0.98]'
                 >
                   Reset
                 </button>
               </div>
-              <label className="mt-4 block">
-                <span className="sr-only">System prompt</span>
+              <label className='mt-4 block'>
+                <span className='sr-only'>System prompt</span>
                 <textarea
                   value={systemPrompt}
                   onChange={(event) => {
                     useEvalStore.getState().setSelectedSystemPromptId("");
                     setSystemPrompt(event.target.value);
                   }}
-                  name="systemPrompt"
-                  autoComplete="off"
-                   className="min-h-48 max-h-80 w-full resize-y overflow-y-auto rounded-[1.25rem] border border-[var(--line)] bg-[var(--canvas-soft)] px-4 py-3 text-base leading-7 outline-none transition"
+                  name='systemPrompt'
+                  autoComplete='off'
+                  className='min-h-48 max-h-80 w-full resize-y overflow-y-auto rounded-[1.25rem] border border-[var(--line)] bg-[var(--canvas-soft)] px-4 py-3 text-base leading-7 outline-none transition'
                   spellCheck={false}
                 />
               </label>
-              <label className="mt-4 block">
-                <div className="mb-2 flex items-center justify-between gap-3">
-                  <span className="text-sm font-medium">Response schema (JSON)</span>
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-[0.7rem] uppercase tracking-[0.2em] text-[var(--muted-ink)]">
+              <label className='mt-4 block'>
+                <div className='mb-2 flex items-center justify-between gap-3'>
+                  <span className='text-sm font-medium'>
+                    Response schema (JSON)
+                  </span>
+                  <div className='flex items-center gap-2'>
+                    <span className='font-mono text-[0.7rem] uppercase tracking-[0.2em] text-[var(--muted-ink)]'>
                       {hasSchema ? "validation on" : "validation off"}
                     </span>
                     <button
-                      type="button"
+                      type='button'
                       onClick={() => setIsSchemaEditorOpen(true)}
-                       className="inline-flex min-h-10 items-center justify-center rounded-full border border-[var(--line)] bg-[var(--panel-strong)] px-3 py-2 text-sm font-medium text-[var(--ink)] transition hover:border-[var(--line-strong)] hover:bg-[var(--canvas-strong)] active:scale-[0.98]"
+                      className='inline-flex min-h-10 items-center justify-center rounded-full border border-[var(--line)] bg-[var(--panel-strong)] px-3 py-2 text-sm font-medium text-[var(--ink)] transition hover:border-[var(--line-strong)] hover:bg-[var(--canvas-strong)] active:scale-[0.98]'
                     >
                       Open editor
                     </button>
@@ -1030,120 +1219,132 @@ export function EvalStudio({ catalog, initialSelections }: EvalStudioProps) {
                     useEvalStore.getState().setSelectedSystemPromptId("");
                     setSchemaText(event.target.value);
                   }}
-                  name="responseSchema"
-                  autoComplete="off"
+                  name='responseSchema'
+                  autoComplete='off'
                   placeholder='{"type":"object","properties":{}}'
-                   className="min-h-40 max-h-80 w-full resize-y overflow-y-auto rounded-[1.25rem] border border-[var(--line)] bg-[var(--canvas-soft)] px-4 py-3 font-mono text-sm leading-7 outline-none transition"
+                  className='min-h-40 max-h-80 w-full resize-y overflow-y-auto rounded-[1.25rem] border border-[var(--line)] bg-[var(--canvas-soft)] px-4 py-3 font-mono text-sm leading-7 outline-none transition'
                   spellCheck={false}
                 />
               </label>
               <div
                 className={cn(
                   "mt-3 rounded-[1.1rem] px-4 py-3 text-sm leading-6",
-                  schemaError
-                     ? "border border-[color:rgba(255,107,146,0.18)] bg-[color:rgba(255,107,146,0.08)] text-[var(--danger)]"
-                     : "border border-[var(--line)] bg-[color:rgba(10,18,31,0.55)] text-[var(--muted-ink)]",
+                  schemaError ?
+                    "border border-[color:rgba(255,107,146,0.18)] bg-[color:rgba(255,107,146,0.08)] text-[var(--danger)]"
+                  : "border border-[var(--line)] bg-[color:rgba(10,18,31,0.55)] text-[var(--muted-ink)]",
                 )}
               >
-                {schemaError
-                  ? `Schema JSON is invalid: ${schemaError}`
-                  : hasSchema
-                    ? "Responses are checked after each model finishes streaming. Passing cards are marked as successes; invalid JSON or schema mismatches are marked as failures."
-                    : "Leave the schema blank for free-form comparisons, or choose a library preset to validate structured JSON output."}
+                {schemaError ?
+                  `Schema JSON is invalid: ${schemaError}`
+                : hasSchema ?
+                  "Responses are checked after each model finishes streaming. Passing cards are marked as successes; invalid JSON or schema mismatches are marked as failures."
+                : "Leave the schema blank for free-form comparisons, or choose a library preset to validate structured JSON output."
+                }
               </div>
             </div>
 
-            <div className="rounded-[1.75rem] border border-[var(--line)] bg-[var(--panel)] p-5 shadow-[var(--shadow-md)] backdrop-blur">
-              <p className="font-mono text-[0.72rem] uppercase tracking-[0.22em] text-[var(--muted-ink)]">
+            <div className='rounded-[1.75rem] border border-[var(--line)] bg-[var(--panel)] p-5 shadow-[var(--shadow-md)] backdrop-blur'>
+              <p className='font-mono text-[0.72rem] uppercase tracking-[0.22em] text-[var(--muted-ink)]'>
                 OpenRouter API key
               </p>
-              <label className="mt-3 block">
-                <span className="sr-only">OpenRouter API key</span>
+              <label className='mt-3 block'>
+                <span className='sr-only'>OpenRouter API key</span>
                 <input
-                  type="password"
+                  type='password'
                   value={openRouterApiKey}
                   onChange={(event) => setOpenRouterApiKey(event.target.value)}
-                  placeholder="sk-or-… (optional, falls back to server key)"
-                  name="openRouterApiKey"
-                  autoComplete="off"
-                  className="w-full rounded-2xl border border-[var(--line)] bg-[var(--canvas-soft)] px-4 py-3 font-mono text-sm leading-7 outline-none transition placeholder:text-[var(--muted-ink)]"
+                  placeholder='sk-or-...'
+                  name='openRouterApiKey'
+                  autoComplete='off'
+                  className='w-full rounded-2xl border border-[var(--line)] bg-[var(--canvas-soft)] px-4 py-3 font-mono text-sm leading-7 outline-none transition placeholder:text-[var(--muted-ink)]'
                   spellCheck={false}
                 />
               </label>
-              <p className="mt-2 text-sm leading-6 text-[var(--muted-ink)]">
-                {openRouterApiKey.trim() ? "Using your personal key." : "Using the server-configured key."}
+              <p className='mt-2 text-sm leading-6 text-[var(--muted-ink)]'>
+                {openRouterApiKey.trim() ?
+                  "Requests send your key as Authorization: Bearer <key>."
+                : "Add your OpenRouter key to run evals and prompt repair."}
               </p>
             </div>
 
-            <div className="rounded-[1.75rem] border border-[var(--line)] bg-[var(--panel)] p-5 shadow-[var(--shadow-md)] backdrop-blur">
-              <div className="flex items-start justify-between gap-3">
+            <div className='rounded-[1.75rem] border border-[var(--line)] bg-[var(--panel)] p-5 shadow-[var(--shadow-md)] backdrop-blur'>
+              <div className='flex items-start justify-between gap-3'>
                 <div>
-                  <p className="font-mono text-[0.72rem] uppercase tracking-[0.22em] text-[var(--muted-ink)]">
+                  <p className='font-mono text-[0.72rem] uppercase tracking-[0.22em] text-[var(--muted-ink)]'>
                     Model roster
                   </p>
-                  <h2 className="mt-2 text-xl font-semibold tracking-[-0.03em]">Providers and models</h2>
+                  <h2 className='mt-2 text-xl font-semibold tracking-[-0.03em]'>
+                    Providers and models
+                  </h2>
                 </div>
-                <div className="flex flex-wrap justify-end gap-2">
+                <div className='flex flex-wrap justify-end gap-2'>
                   <button
-                    type="button"
+                    type='button'
                     onClick={selectAllModels}
-                    disabled={isSubmitting || allCatalogModelsSelected || catalog.models.length === 0}
-                     className="inline-flex min-h-11 items-center rounded-full border border-[var(--line)] bg-[var(--panel-strong)] px-4 py-2 text-sm font-medium text-[var(--ink)] transition hover:border-[var(--line-strong)] hover:bg-[var(--canvas-strong)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-45"
+                    disabled={
+                      isSubmitting ||
+                      allCatalogModelsSelected ||
+                      catalog.models.length === 0
+                    }
+                    className='inline-flex min-h-11 items-center rounded-full border border-[var(--line)] bg-[var(--panel-strong)] px-4 py-2 text-sm font-medium text-[var(--ink)] transition hover:border-[var(--line-strong)] hover:bg-[var(--canvas-strong)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-45'
                   >
                     Run on all models
                   </button>
                   <button
-                    type="button"
+                    type='button'
                     onClick={addSelection}
-                     className="inline-flex min-h-11 items-center gap-2 rounded-full bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-[var(--accent-foreground)] shadow-[0_12px_32px_rgba(29,176,243,0.24)] transition active:scale-[0.98] hover:bg-[var(--accent-strong)]"
+                    className='inline-flex min-h-11 items-center gap-2 rounded-full bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-[var(--accent-foreground)] shadow-[0_12px_32px_rgba(29,176,243,0.24)] transition active:scale-[0.98] hover:bg-[var(--accent-strong)]'
                   >
-                    <Plus className="h-4 w-4" />
+                    <Plus className='h-4 w-4' />
                     Add
                   </button>
                 </div>
               </div>
 
-              <div className="mt-4 space-y-4">
-                {allCatalogModelsSelected ? (
-                  <div className="rounded-[1.25rem] border border-[var(--line)] bg-[var(--canvas-soft)] px-4 py-3 text-sm leading-6 text-[var(--muted-ink)]">
-                    Running against the full catalog. Individual model selectors are hidden while all models are selected.
+              <div className='mt-4 space-y-4'>
+                {allCatalogModelsSelected ?
+                  <div className='rounded-[1.25rem] border border-[var(--line)] bg-[var(--canvas-soft)] px-4 py-3 text-sm leading-6 text-[var(--muted-ink)]'>
+                    Running against the full catalog. Individual model selectors
+                    are hidden while all models are selected.
                   </div>
-                ) : (
-                  selectedModels.map((selection, index) => {
-                    const providerModels = modelsByProvider.get(selection.providerId) ?? [];
+                : selectedModels.map((selection, index) => {
+                    const providerModels =
+                      modelsByProvider.get(selection.providerId) ?? [];
                     const model = modelsByKey.get(selection.modelKey);
 
                     return (
                       <div
                         key={selection.id}
-                        className="rounded-[1.25rem] border border-[var(--line)] bg-[var(--canvas-soft)] p-3"
+                        className='rounded-[1.25rem] border border-[var(--line)] bg-[var(--canvas-soft)] p-3'
                       >
-                        <div className="mb-3 flex items-center justify-between gap-3">
-                          <div className="font-mono text-[0.72rem] uppercase tracking-[0.22em] text-[var(--muted-ink)]">
+                        <div className='mb-3 flex items-center justify-between gap-3'>
+                          <div className='font-mono text-[0.72rem] uppercase tracking-[0.22em] text-[var(--muted-ink)]'>
                             Slot {index + 1}
                           </div>
-                          {selectedModels.length > 1 ? (
+                          {selectedModels.length > 1 ?
                             <button
-                              type="button"
+                              type='button'
                               onClick={() => removeSelection(selection.id)}
-                              className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full text-[var(--muted-ink)] transition hover:bg-[color:rgba(255,255,255,0.05)] active:scale-[0.98]"
+                              className='inline-flex min-h-11 min-w-11 items-center justify-center rounded-full text-[var(--muted-ink)] transition hover:bg-[color:rgba(255,255,255,0.05)] active:scale-[0.98]'
                               aria-label={`Remove model slot ${index + 1}`}
                             >
-                              <Trash2 aria-hidden="true" className="h-4 w-4" />
+                              <Trash2 aria-hidden='true' className='h-4 w-4' />
                             </button>
-                          ) : null}
+                          : null}
                         </div>
 
-                        <div className="grid min-w-0 gap-3">
-                          <label className="grid min-w-0 gap-2 text-sm font-medium">
+                        <div className='grid min-w-0 gap-3'>
+                          <label className='grid min-w-0 gap-2 text-sm font-medium'>
                             <span>Provider</span>
                             <select
                               value={selection.providerId}
                               onChange={(event) =>
-                                updateSelection(selection.id, { providerId: event.target.value })
+                                updateSelection(selection.id, {
+                                  providerId: event.target.value,
+                                })
                               }
                               name={`provider-${selection.id}`}
-                               className="min-h-12 w-full min-w-0 max-w-full rounded-2xl border border-[var(--line)] bg-[var(--canvas-strong)] px-4 text-base text-[var(--ink)] outline-none transition"
+                              className='min-h-12 w-full min-w-0 max-w-full rounded-2xl border border-[var(--line)] bg-[var(--canvas-strong)] px-4 text-base text-[var(--ink)] outline-none transition'
                             >
                               {catalog.providers.map((provider) => (
                                 <option key={provider.id} value={provider.id}>
@@ -1153,18 +1354,23 @@ export function EvalStudio({ catalog, initialSelections }: EvalStudioProps) {
                             </select>
                           </label>
 
-                          <label className="grid min-w-0 gap-2 text-sm font-medium">
+                          <label className='grid min-w-0 gap-2 text-sm font-medium'>
                             <span>Model</span>
                             <select
                               value={selection.modelKey}
                               onChange={(event) =>
-                                updateSelection(selection.id, { modelKey: event.target.value })
+                                updateSelection(selection.id, {
+                                  modelKey: event.target.value,
+                                })
                               }
                               name={`model-${selection.id}`}
-                               className="min-h-12 w-full min-w-0 max-w-full rounded-2xl border border-[var(--line)] bg-[var(--canvas-strong)] px-4 text-base text-[var(--ink)] outline-none transition"
+                              className='min-h-12 w-full min-w-0 max-w-full rounded-2xl border border-[var(--line)] bg-[var(--canvas-strong)] px-4 text-base text-[var(--ink)] outline-none transition'
                             >
                               {providerModels.map((providerModel) => (
-                                <option key={providerModel.key} value={providerModel.key}>
+                                <option
+                                  key={providerModel.key}
+                                  value={providerModel.key}
+                                >
                                   {providerModel.label}
                                 </option>
                               ))}
@@ -1172,383 +1378,611 @@ export function EvalStudio({ catalog, initialSelections }: EvalStudioProps) {
                           </label>
                         </div>
 
-                        <p className="mt-3 text-sm leading-6 text-[var(--muted-ink)]">{summarizeModel(model)}</p>
+                        <p className='mt-3 text-sm leading-6 text-[var(--muted-ink)]'>
+                          {summarizeModel(model)}
+                        </p>
                       </div>
                     );
                   })
-                )}
+                }
               </div>
             </div>
           </aside>
 
-          <section className="flex min-h-[70vh] flex-col rounded-[1.75rem] border border-[var(--line)] bg-[var(--panel)] p-4 shadow-[var(--shadow-lg)] backdrop-blur sm:p-5">
-            <div className="grid gap-4 border-b border-[var(--line)] pb-5 xl:grid-cols-[minmax(0,1.25fr)_320px]">
-              <div className="rounded-[1.5rem] border border-[var(--line)] bg-[linear-gradient(180deg,rgba(13,23,40,0.98),rgba(9,17,31,0.98))] p-3 shadow-[var(--shadow-md)] sm:p-4">
-                <div className="mb-3 flex flex-wrap items-center gap-2">
+          <section className='flex min-h-[70vh] flex-col rounded-[1.75rem] border border-[var(--line)] bg-[var(--panel)] p-4 shadow-[var(--shadow-lg)] backdrop-blur sm:p-5'>
+            <div className='grid gap-4 border-b border-[var(--line)] pb-5 xl:grid-cols-[minmax(0,1.25fr)_320px]'>
+              <div className='rounded-[1.5rem] border border-[var(--line)] bg-[linear-gradient(180deg,rgba(13,23,40,0.98),rgba(9,17,31,0.98))] p-3 shadow-[var(--shadow-md)] sm:p-4'>
+                <div className='mb-3 flex flex-wrap items-center gap-2'>
                   {visiblePromptPills.map((selection) => {
                     const model = modelsByKey.get(selection.modelKey);
 
                     return (
                       <span
                         key={selection.id}
-                        className="inline-flex min-h-11 items-center rounded-full border border-[var(--line)] bg-[var(--panel-frost)] px-4 py-2 text-sm text-[var(--ink)] shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]"
+                        className='inline-flex min-h-11 items-center rounded-full border border-[var(--line)] bg-[var(--panel-frost)] px-4 py-2 text-sm text-[var(--ink)] shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]'
                       >
-                        <span className="font-semibold">{model?.providerName ?? selection.providerId}</span>
-                        <span className="mx-2 text-[var(--muted-ink)]">/</span>
+                        <span className='font-semibold'>
+                          {model?.providerName ?? selection.providerId}
+                        </span>
+                        <span className='mx-2 text-[var(--muted-ink)]'>/</span>
                         <span>{model?.label ?? selection.modelKey}</span>
                       </span>
                     );
                   })}
-                  {hiddenPromptPillCount > 0 ? (
-                    <span className="inline-flex min-h-11 items-center rounded-full border border-[var(--line)] bg-[var(--panel-frost)] px-4 py-2 text-sm text-[var(--muted-ink)] shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
+                  {hiddenPromptPillCount > 0 ?
+                    <span className='inline-flex min-h-11 items-center rounded-full border border-[var(--line)] bg-[var(--panel-frost)] px-4 py-2 text-sm text-[var(--muted-ink)] shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]'>
                       {hiddenPromptPillCount} more
                     </span>
-                  ) : null}
+                  : null}
                 </div>
 
-                <label className="block">
-                  <span className="sr-only">Chat message</span>
+                <label className='block'>
+                  <span className='sr-only'>Chat message</span>
                   <textarea
                     value={prompt}
                     onChange={(event) => setPrompt(event.target.value)}
                     onKeyDown={(event) => {
-                      if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+                      if (
+                        (event.metaKey || event.ctrlKey) &&
+                        event.key === "Enter"
+                      ) {
                         event.preventDefault();
                         void submitPrompt();
                       }
                     }}
-                    placeholder="Ask every selected model the same thing..."
-                    name="prompt"
-                    autoComplete="off"
-                    className="min-h-32 max-h-56 w-full resize-y overflow-y-auto rounded-[1.25rem] border border-[var(--line)] bg-[var(--canvas-soft)] px-4 py-3 text-base leading-7 outline-none transition"
+                    placeholder='Ask every selected model the same thing...'
+                    name='prompt'
+                    autoComplete='off'
+                    className='min-h-32 max-h-56 w-full resize-y overflow-y-auto rounded-[1.25rem] border border-[var(--line)] bg-[var(--canvas-soft)] px-4 py-3 text-base leading-7 outline-none transition'
                     spellCheck={false}
                   />
                 </label>
 
-                <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <p className="text-sm leading-6 text-[var(--muted-ink)]">
-                    Streams via OpenRouter. Prices come from models.dev and are estimated from reported token usage.
+                <div className='mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
+                  <p className='text-sm leading-6 text-[var(--muted-ink)]'>
+                    Streams via OpenRouter. Prices come from models.dev and are
+                    estimated from reported token usage.
                   </p>
                   <button
-                    type="button"
+                    type='button'
                     onClick={() => void submitPrompt()}
                     disabled={!canSubmit}
-                    className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-[var(--accent)] px-5 py-3 text-sm font-semibold text-[var(--accent-foreground)] transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-45 hover:bg-[var(--accent-strong)]"
+                    className='inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-[var(--accent)] px-5 py-3 text-sm font-semibold text-[var(--accent-foreground)] transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-45 hover:bg-[var(--accent-strong)]'
                   >
-                    {isSubmitting ? (
-                      <LoaderCircle aria-hidden="true" className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <SendHorizontal aria-hidden="true" className="h-4 w-4" />
-                    )}
-                    Send to {selectedModels.length} model{selectedModels.length === 1 ? "" : "s"}
+                    {isSubmitting ?
+                      <LoaderCircle
+                        aria-hidden='true'
+                        className='h-4 w-4 animate-spin'
+                      />
+                    : <SendHorizontal aria-hidden='true' className='h-4 w-4' />}
+                    Send to {selectedModels.length} model
+                    {selectedModels.length === 1 ? "" : "s"}
                   </button>
                 </div>
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
-                <div className="rounded-[1.5rem] border border-[var(--line)] bg-[linear-gradient(145deg,rgba(17,31,53,0.96),rgba(9,17,31,0.92))] p-4 shadow-[var(--shadow-md)]">
-                  <div className="font-mono text-[0.7rem] uppercase tracking-[0.22em] text-[var(--muted-ink)]">
+              <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-1'>
+                <div className='rounded-[1.5rem] border border-[var(--line)] bg-[linear-gradient(145deg,rgba(17,31,53,0.96),rgba(9,17,31,0.92))] p-4 shadow-[var(--shadow-md)]'>
+                  <div className='font-mono text-[0.7rem] uppercase tracking-[0.22em] text-[var(--muted-ink)]'>
                     Session overview
                   </div>
-                  <div className="mt-4 grid grid-cols-2 gap-3">
-                    <div className="rounded-2xl border border-[var(--line)] bg-[var(--canvas-soft)] p-3">
-                      <div className="font-mono text-[0.66rem] uppercase tracking-[0.2em] text-[var(--muted-ink)]">Roster</div>
-                      <div className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-[var(--ink)]">{selectedModels.length}</div>
+                  <div className='mt-4 grid grid-cols-2 gap-3'>
+                    <div className='rounded-2xl border border-[var(--line)] bg-[var(--canvas-soft)] p-3'>
+                      <div className='font-mono text-[0.66rem] uppercase tracking-[0.2em] text-[var(--muted-ink)]'>
+                        Roster
+                      </div>
+                      <div className='mt-2 text-2xl font-semibold tracking-[-0.04em] text-[var(--ink)]'>
+                        {selectedModels.length}
+                      </div>
                     </div>
-                    <div className="rounded-2xl border border-[var(--line)] bg-[var(--canvas-soft)] p-3">
-                      <div className="font-mono text-[0.66rem] uppercase tracking-[0.2em] text-[var(--muted-ink)]">Turns</div>
-                      <div className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-[var(--ink)]">{turns.length}</div>
+                    <div className='rounded-2xl border border-[var(--line)] bg-[var(--canvas-soft)] p-3'>
+                      <div className='font-mono text-[0.66rem] uppercase tracking-[0.2em] text-[var(--muted-ink)]'>
+                        Turns
+                      </div>
+                      <div className='mt-2 text-2xl font-semibold tracking-[-0.04em] text-[var(--ink)]'>
+                        {turns.length}
+                      </div>
                     </div>
-                    <div className="rounded-2xl border border-[var(--line)] bg-[var(--canvas-soft)] p-3">
-                      <div className="font-mono text-[0.66rem] uppercase tracking-[0.2em] text-[var(--muted-ink)]">Schema</div>
-                      <div className="mt-2 text-sm font-semibold uppercase tracking-[0.16em] text-[var(--ink)]">
+                    <div className='rounded-2xl border border-[var(--line)] bg-[var(--canvas-soft)] p-3'>
+                      <div className='font-mono text-[0.66rem] uppercase tracking-[0.2em] text-[var(--muted-ink)]'>
+                        Schema
+                      </div>
+                      <div className='mt-2 text-sm font-semibold uppercase tracking-[0.16em] text-[var(--ink)]'>
                         {hasSchema ? "Active" : "Optional"}
                       </div>
                     </div>
-                    <div className="rounded-2xl border border-[var(--line)] bg-[var(--canvas-soft)] p-3">
-                      <div className="font-mono text-[0.66rem] uppercase tracking-[0.2em] text-[var(--muted-ink)]">Timeout</div>
+                    <div className='rounded-2xl border border-[var(--line)] bg-[var(--canvas-soft)] p-3'>
+                      <div className='font-mono text-[0.66rem] uppercase tracking-[0.2em] text-[var(--muted-ink)]'>
+                        Timeout
+                      </div>
                       <input
-                        type="number"
-                        min="0.5"
-                        max="300"
-                        step="0.5"
+                        type='number'
+                        min='0.5'
+                        max='300'
+                        step='0.5'
                         value={timeoutSeconds}
-                        onChange={(event) => setTimeoutSeconds(event.target.value)}
-                        placeholder="—"
-                        className="mt-2 w-full bg-transparent text-2xl font-semibold tracking-[-0.04em] text-[var(--ink)] outline-none placeholder:text-[var(--muted-ink)] [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                        onChange={(event) =>
+                          setTimeoutSeconds(event.target.value)
+                        }
+                        placeholder='—'
+                        className='mt-2 w-full bg-transparent text-2xl font-semibold tracking-[-0.04em] text-[var(--ink)] outline-none placeholder:text-[var(--muted-ink)] [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none'
                       />
-                      <div className="mt-1 font-mono text-[0.6rem] uppercase tracking-[0.18em] text-[var(--muted-ink)]">
+                      <div className='mt-1 font-mono text-[0.6rem] uppercase tracking-[0.18em] text-[var(--muted-ink)]'>
                         {timeoutSeconds ? "seconds" : "disabled"}
                       </div>
                     </div>
-                    </div>
+                  </div>
                 </div>
 
-                <div className="rounded-[1.5rem] border border-[var(--line)] bg-[linear-gradient(180deg,rgba(13,23,40,0.98),rgba(9,17,31,0.96))] p-4 shadow-[var(--shadow-md)]">
-                  <div className="flex items-center justify-between gap-3">
+                <div className='rounded-[1.5rem] border border-[var(--line)] bg-[linear-gradient(180deg,rgba(13,23,40,0.98),rgba(9,17,31,0.96))] p-4 shadow-[var(--shadow-md)]'>
+                  <div className='flex items-center justify-between gap-3'>
                     <div>
-                      <div className="font-mono text-[0.7rem] uppercase tracking-[0.22em] text-[var(--muted-ink)]">
+                      <div className='font-mono text-[0.7rem] uppercase tracking-[0.22em] text-[var(--muted-ink)]'>
                         Latest run
                       </div>
-                      <p className="mt-2 text-sm leading-6 text-[var(--ink-soft)]">
-                        {latestTurn
-                          ? "Keep the active run visible while the grid reshapes around each model result."
-                          : "Send a prompt to populate the live response board and compare runs side by side."}
+                      <p className='mt-2 text-sm leading-6 text-[var(--ink-soft)]'>
+                        {latestTurn ?
+                          "Keep the active run visible while the grid reshapes around each model result."
+                        : "Send a prompt to populate the live response board and compare runs side by side."
+                        }
                       </p>
                     </div>
-                    <div className="rounded-full border border-[var(--line)] bg-[var(--canvas-soft)] px-3 py-2 font-mono text-[0.66rem] uppercase tracking-[0.18em] text-[var(--muted-ink)]">
+                    <div className='rounded-full border border-[var(--line)] bg-[var(--canvas-soft)] px-3 py-2 font-mono text-[0.66rem] uppercase tracking-[0.18em] text-[var(--muted-ink)]'>
                       {latestTurn ? "Live" : "Idle"}
                     </div>
                   </div>
-                  <div className="mt-4 grid grid-cols-3 gap-3 text-sm">
-                    <div className="rounded-2xl border border-[color:rgba(56,211,159,0.18)] bg-[color:rgba(56,211,159,0.08)] p-3 text-[var(--success)]">
-                      <div className="font-mono text-[0.66rem] uppercase tracking-[0.2em]">Success</div>
-                      <div className="mt-2 text-xl font-semibold tracking-[-0.04em]">{latestSuccessCount}</div>
+                  <div className='mt-4 grid grid-cols-3 gap-3 text-sm'>
+                    <div className='rounded-2xl border border-[color:rgba(56,211,159,0.18)] bg-[color:rgba(56,211,159,0.08)] p-3 text-[var(--success)]'>
+                      <div className='font-mono text-[0.66rem] uppercase tracking-[0.2em]'>
+                        Success
+                      </div>
+                      <div className='mt-2 text-xl font-semibold tracking-[-0.04em]'>
+                        {latestSuccessCount}
+                      </div>
                     </div>
-                    <div className="rounded-2xl border border-[color:rgba(255,107,146,0.18)] bg-[color:rgba(255,107,146,0.08)] p-3 text-[var(--danger)]">
-                      <div className="font-mono text-[0.66rem] uppercase tracking-[0.2em]">Issues</div>
-                      <div className="mt-2 text-xl font-semibold tracking-[-0.04em]">{latestFailureCount}</div>
+                    <div className='rounded-2xl border border-[color:rgba(255,107,146,0.18)] bg-[color:rgba(255,107,146,0.08)] p-3 text-[var(--danger)]'>
+                      <div className='font-mono text-[0.66rem] uppercase tracking-[0.2em]'>
+                        Issues
+                      </div>
+                      <div className='mt-2 text-xl font-semibold tracking-[-0.04em]'>
+                        {latestFailureCount}
+                      </div>
                     </div>
-                    <div className="rounded-2xl border border-[color:rgba(102,184,255,0.18)] bg-[color:rgba(102,184,255,0.08)] p-3 text-[var(--info)]">
-                      <div className="font-mono text-[0.66rem] uppercase tracking-[0.2em]">In flight</div>
-                      <div className="mt-2 text-xl font-semibold tracking-[-0.04em]">{latestStreamingCount}</div>
+                    <div className='rounded-2xl border border-[color:rgba(102,184,255,0.18)] bg-[color:rgba(102,184,255,0.08)] p-3 text-[var(--info)]'>
+                      <div className='font-mono text-[0.66rem] uppercase tracking-[0.2em]'>
+                        In flight
+                      </div>
+                      <div className='mt-2 text-xl font-semibold tracking-[-0.04em]'>
+                        {latestStreamingCount}
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="mt-5 flex items-center justify-between gap-3 border-b border-[var(--line)] px-2 pb-4">
-                <div>
-                  <p className="font-mono text-[0.72rem] uppercase tracking-[0.22em] text-[var(--muted-ink)]">
-                    Conversation
-                  </p>
-                  <h2 className="mt-2 text-xl font-semibold tracking-[-0.03em]">Parallel outputs</h2>
+            <div className='mt-5 flex items-center justify-between gap-3 border-b border-[var(--line)] px-2 pb-4'>
+              <div>
+                <p className='font-mono text-[0.72rem] uppercase tracking-[0.22em] text-[var(--muted-ink)]'>
+                  Conversation
+                </p>
+                <h2 className='mt-2 text-xl font-semibold tracking-[-0.03em]'>
+                  Parallel outputs
+                </h2>
+              </div>
+              <div className='flex flex-wrap items-center justify-end gap-2'>
+                <label className='inline-flex min-h-11 cursor-pointer items-center gap-3 rounded-full border border-[var(--line)] bg-[var(--panel-frost)] px-4 py-2 text-sm text-[var(--ink)] shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]'>
+                  <input
+                    type='checkbox'
+                    name='showOnlySuccess'
+                    checked={showOnlySuccess}
+                    onChange={(event) =>
+                      setShowOnlySuccess(event.target.checked)
+                    }
+                    className='h-4 w-4 accent-[var(--accent-strong)]'
+                  />
+                  <span>Show only success</span>
+                </label>
+                <button
+                  type='button'
+                  onClick={() => saveAllTurns(turns, systemPrompt, schemaText)}
+                  disabled={!hasTurns || isSubmitting}
+                  className='inline-flex min-h-11 items-center gap-2 rounded-full border border-[var(--line)] bg-[var(--panel-frost)] px-4 py-2 text-sm font-medium text-[var(--ink)] transition hover:border-[var(--line-strong)] hover:bg-[var(--canvas-strong)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-45'
+                >
+                  <Save aria-hidden='true' className='h-4 w-4' />
+                  Save session
+                </button>
+                <button
+                  type='button'
+                  onClick={() => setShowSavedSessions(!showSavedSessions)}
+                  className='inline-flex min-h-11 items-center gap-2 rounded-full border border-[var(--line)] bg-[var(--panel-frost)] px-4 py-2 text-sm font-medium text-[var(--ink)] transition hover:border-[var(--line-strong)] hover:bg-[var(--canvas-strong)] active:scale-[0.98]'
+                >
+                  <Download aria-hidden='true' className='h-4 w-4' />
+                  Load ({savedSessions.length})
+                </button>
+                <button
+                  type='button'
+                  onClick={exportSessions}
+                  disabled={savedSessions.length === 0}
+                  className='inline-flex min-h-11 items-center gap-2 rounded-full border border-[var(--line)] bg-[var(--panel-frost)] px-4 py-2 text-sm font-medium text-[var(--ink)] transition hover:border-[var(--line-strong)] hover:bg-[var(--canvas-strong)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-45'
+                >
+                  <Download aria-hidden='true' className='h-4 w-4' />
+                  Export
+                </button>
+                <button
+                  type='button'
+                  onClick={() => importInputRef.current?.click()}
+                  className='inline-flex min-h-11 items-center gap-2 rounded-full border border-[var(--line)] bg-[var(--panel-frost)] px-4 py-2 text-sm font-medium text-[var(--ink)] transition hover:border-[var(--line-strong)] hover:bg-[var(--canvas-strong)] active:scale-[0.98]'
+                >
+                  <Upload aria-hidden='true' className='h-4 w-4' />
+                  Import
+                </button>
+                <input
+                  ref={importInputRef}
+                  type='file'
+                  accept='.json'
+                  onChange={importSessions}
+                  className='hidden'
+                />
+                <button
+                  type='button'
+                  onClick={() => {
+                    clearTurns();
+                    resetComparison();
+                  }}
+                  disabled={!hasTurns || isSubmitting}
+                  className='inline-flex min-h-11 items-center gap-2 rounded-full border border-[var(--line)] bg-[var(--panel-frost)] px-4 py-2 text-sm font-medium text-[var(--ink)] transition hover:border-[var(--line-strong)] hover:bg-[var(--canvas-strong)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-45'
+                >
+                  <X aria-hidden='true' className='h-4 w-4' />
+                  Clear
+                </button>
+                <div className='rounded-full bg-[var(--canvas)] px-4 py-2 font-mono text-[0.72rem] uppercase tracking-[0.2em] text-[var(--muted-ink)]'>
+                  streamed · metered · side-by-side
                 </div>
-               <div className="flex flex-wrap items-center justify-end gap-2">
-                  <label className="inline-flex min-h-11 cursor-pointer items-center gap-3 rounded-full border border-[var(--line)] bg-[var(--panel-frost)] px-4 py-2 text-sm text-[var(--ink)] shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
-                    <input
-                      type="checkbox"
-                     name="showOnlySuccess"
-                     checked={showOnlySuccess}
-                     onChange={(event) => setShowOnlySuccess(event.target.checked)}
-                     className="h-4 w-4 accent-[var(--accent-strong)]"
-                   />
-                   <span>Show only success</span>
-                 </label>
-                  <button
-                      type="button"
-                      onClick={() => saveAllTurns(turns, systemPrompt, schemaText)}
-                      disabled={!hasTurns || isSubmitting}
-                      className="inline-flex min-h-11 items-center gap-2 rounded-full border border-[var(--line)] bg-[var(--panel-frost)] px-4 py-2 text-sm font-medium text-[var(--ink)] transition hover:border-[var(--line-strong)] hover:bg-[var(--canvas-strong)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-45"
-                    >
-                      <Save aria-hidden="true" className="h-4 w-4" />
-                      Save session
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setShowSavedSessions(!showSavedSessions)}
-                      className="inline-flex min-h-11 items-center gap-2 rounded-full border border-[var(--line)] bg-[var(--panel-frost)] px-4 py-2 text-sm font-medium text-[var(--ink)] transition hover:border-[var(--line-strong)] hover:bg-[var(--canvas-strong)] active:scale-[0.98]"
-                    >
-                      <Download aria-hidden="true" className="h-4 w-4" />
-                      Load ({savedSessions.length})
-                    </button>
-                    <button
-                      type="button"
-                      onClick={exportSessions}
-                      disabled={savedSessions.length === 0}
-                      className="inline-flex min-h-11 items-center gap-2 rounded-full border border-[var(--line)] bg-[var(--panel-frost)] px-4 py-2 text-sm font-medium text-[var(--ink)] transition hover:border-[var(--line-strong)] hover:bg-[var(--canvas-strong)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-45"
-                    >
-                      <Download aria-hidden="true" className="h-4 w-4" />
-                      Export
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => importInputRef.current?.click()}
-                      className="inline-flex min-h-11 items-center gap-2 rounded-full border border-[var(--line)] bg-[var(--panel-frost)] px-4 py-2 text-sm font-medium text-[var(--ink)] transition hover:border-[var(--line-strong)] hover:bg-[var(--canvas-strong)] active:scale-[0.98]"
-                    >
-                      <Upload aria-hidden="true" className="h-4 w-4" />
-                      Import
-                    </button>
-                    <input
-                      ref={importInputRef}
-                      type="file"
-                      accept=".json"
-                      onChange={importSessions}
-                      className="hidden"
-                    />
-                    <button
-                      type="button"
-                     onClick={() => {
-                          clearTurns();
-                          resetComparison();
-                        }}
-                     disabled={!hasTurns || isSubmitting}
-                       className="inline-flex min-h-11 items-center gap-2 rounded-full border border-[var(--line)] bg-[var(--panel-frost)] px-4 py-2 text-sm font-medium text-[var(--ink)] transition hover:border-[var(--line-strong)] hover:bg-[var(--canvas-strong)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-45"
-                    >
-                     <X aria-hidden="true" className="h-4 w-4" />
-                     Clear
-                   </button>
-                   <div className="rounded-full bg-[var(--canvas)] px-4 py-2 font-mono text-[0.72rem] uppercase tracking-[0.2em] text-[var(--muted-ink)]">
-                     streamed · metered · side-by-side
-                   </div>
               </div>
-              </div>
+            </div>
 
-              {showSavedSessions ? (
-              <div className="mt-4 rounded-[1.25rem] border border-[var(--line)] bg-[linear-gradient(180deg,rgba(13,23,40,0.98),rgba(9,17,31,0.96))] p-4 shadow-[var(--shadow-md)]">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="font-mono text-[0.72rem] uppercase tracking-[0.22em] text-[var(--muted-ink)]">
+            {showSavedSessions ?
+              <div className='mt-4 rounded-[1.25rem] border border-[var(--line)] bg-[linear-gradient(180deg,rgba(13,23,40,0.98),rgba(9,17,31,0.96))] p-4 shadow-[var(--shadow-md)]'>
+                <div className='flex items-center justify-between gap-3'>
+                  <p className='font-mono text-[0.72rem] uppercase tracking-[0.22em] text-[var(--muted-ink)]'>
                     Saved sessions ({savedSessions.length})
                   </p>
                   <button
-                    type="button"
+                    type='button'
                     onClick={() => setShowSavedSessions(false)}
-                    className="inline-flex min-h-9 items-center justify-center rounded-full border border-[var(--line)] px-3 py-1 text-sm text-[var(--muted-ink)] transition hover:bg-[var(--canvas-strong)]"
+                    className='inline-flex min-h-9 items-center justify-center rounded-full border border-[var(--line)] px-3 py-1 text-sm text-[var(--muted-ink)] transition hover:bg-[var(--canvas-strong)]'
                   >
-                    <X aria-hidden="true" className="h-4 w-4" />
+                    <X aria-hidden='true' className='h-4 w-4' />
                   </button>
                 </div>
-                {savedSessions.length === 0 ? (
-                  <p className="mt-3 text-sm text-[var(--muted-ink)]">No saved sessions yet.</p>
-                ) : (
-                  <div className="mt-3 max-h-72 space-y-2 overflow-y-auto">
+                {savedSessions.length === 0 ?
+                  <p className='mt-3 text-sm text-[var(--muted-ink)]'>
+                    No saved sessions yet.
+                  </p>
+                : <div className='mt-3 max-h-72 space-y-2 overflow-y-auto'>
                     {savedSessions.map((session) => (
                       <div
                         key={session.id}
-                        className="flex items-center justify-between gap-3 rounded-2xl border border-[var(--line)] bg-[var(--canvas-soft)] p-3"
+                        className='flex items-center justify-between gap-3 rounded-2xl border border-[var(--line)] bg-[var(--canvas-soft)] p-3'
                       >
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-medium text-[var(--ink)]">{session.name}</p>
-                          <p className="mt-1 font-mono text-[0.66rem] text-[var(--muted-ink)]">
-                            {new Date(session.savedAt).toLocaleString()} · {session.turns.length} turn{session.turns.length === 1 ? "" : "s"}
+                        <div className='min-w-0 flex-1'>
+                          <p className='truncate text-sm font-medium text-[var(--ink)]'>
+                            {session.name}
+                          </p>
+                          <p className='mt-1 font-mono text-[0.66rem] text-[var(--muted-ink)]'>
+                            {new Date(session.savedAt).toLocaleString()} ·{" "}
+                            {session.turns.length} turn
+                            {session.turns.length === 1 ? "" : "s"}
                           </p>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className='flex items-center gap-2'>
                           <button
-                            type="button"
+                            type='button'
                             onClick={() => loadSession(session)}
-                            className="inline-flex min-h-9 items-center gap-1.5 rounded-full bg-[var(--accent)] px-3 py-1.5 text-sm font-semibold text-[var(--accent-foreground)] transition hover:bg-[var(--accent-strong)] active:scale-[0.98]"
+                            className='inline-flex min-h-9 items-center gap-1.5 rounded-full bg-[var(--accent)] px-3 py-1.5 text-sm font-semibold text-[var(--accent-foreground)] transition hover:bg-[var(--accent-strong)] active:scale-[0.98]'
                           >
                             Load
                           </button>
                           <button
-                            type="button"
+                            type='button'
                             onClick={() => deleteSavedSession(session.id)}
-                            className="inline-flex min-h-9 min-w-9 items-center justify-center rounded-full text-[var(--muted-ink)] transition hover:bg-[color:rgba(255,107,146,0.12)] hover:text-[var(--danger)]"
+                            className='inline-flex min-h-9 min-w-9 items-center justify-center rounded-full text-[var(--muted-ink)] transition hover:bg-[color:rgba(255,107,146,0.12)] hover:text-[var(--danger)]'
                           >
-                            <Trash2 aria-hidden="true" className="h-4 w-4" />
+                            <Trash2 aria-hidden='true' className='h-4 w-4' />
                           </button>
                         </div>
                       </div>
                     ))}
                   </div>
-                )}
+                }
               </div>
-              ) : null}
+            : null}
 
-              <div className="mt-4 flex-1 space-y-5 overflow-y-auto pr-1">
-              {turns.length === 0 ? (
-                  <div className="flex min-h-[360px] items-center justify-center rounded-[1.5rem] border border-dashed border-[var(--line)] bg-[linear-gradient(180deg,rgba(10,18,31,0.94),rgba(13,23,40,0.94))] p-8 text-center">
-                  <div className="max-w-lg space-y-4">
-                    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--accent)]/12 text-[var(--accent-strong)]">
-                      <Sparkles className="h-7 w-7" />
+            <div className='mt-4 flex-1 space-y-5 overflow-y-auto pr-1'>
+              {turns.length === 0 ?
+                <div className='flex min-h-[360px] items-center justify-center rounded-[1.5rem] border border-dashed border-[var(--line)] bg-[linear-gradient(180deg,rgba(10,18,31,0.94),rgba(13,23,40,0.94))] p-8 text-center'>
+                  <div className='max-w-lg space-y-4'>
+                    <div className='mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--accent)]/12 text-[var(--accent-strong)]'>
+                      <Sparkles className='h-7 w-7' />
                     </div>
                     <div>
-                      <h3 className="text-2xl font-semibold tracking-[-0.03em]">Start your first eval round</h3>
-                      <p className="mt-3 text-base leading-7 text-[var(--muted-ink)]">
-                        Enter a prompt below to stream all selected models concurrently. Each result card shows time to first token, total duration, token usage, and estimated cost.
+                      <h3 className='text-2xl font-semibold tracking-[-0.03em]'>
+                        Start your first eval round
+                      </h3>
+                      <p className='mt-3 text-base leading-7 text-[var(--muted-ink)]'>
+                        Enter a prompt below to stream all selected models
+                        concurrently. Each result card shows time to first
+                        token, total duration, token usage, and estimated cost.
                       </p>
                     </div>
                   </div>
                 </div>
-              ) : null}
+              : null}
 
               {turns.map((turn) => {
                 const turnResponses = Object.values(turn.responses);
-                const passedCount = turnResponses.filter((response) => response.validation.status === "passed").length;
-                const failedCount = turnResponses.filter((response) => response.validation.status === "failed").length;
+                const passedCount = turnResponses.filter(
+                  (response) => response.validation.status === "passed",
+                ).length;
+                const failedCount = turnResponses.filter(
+                  (response) => response.validation.status === "failed",
+                ).length;
                 const hasEstimatedCost = turnResponses.some(
-                  (response) => response.estimatedCost !== undefined && !Number.isNaN(response.estimatedCost),
+                  (response) =>
+                    response.estimatedCost !== undefined &&
+                    !Number.isNaN(response.estimatedCost),
                 );
                 const totalEstimatedCost = turnResponses.reduce(
                   (sum, response) => sum + (response.estimatedCost ?? 0),
                   0,
                 );
-                const hiddenCount = showOnlySuccess
-                  ? turnResponses.filter((response) => !isSuccessfulResponse(response)).length
+                const hiddenCount =
+                  showOnlySuccess ?
+                    turnResponses.filter(
+                      (response) => !isSuccessfulResponse(response),
+                    ).length
                   : 0;
-                const visibleResponses = showOnlySuccess
-                  ? turnResponses.filter(isSuccessfulResponse)
+                const visibleResponses =
+                  showOnlySuccess ?
+                    turnResponses.filter(isSuccessfulResponse)
                   : turnResponses;
 
                 return (
-                 <article key={turn.id} className="turn-card rounded-[1.5rem] border border-[var(--line)] bg-[linear-gradient(180deg,rgba(13,23,40,0.98),rgba(9,17,31,0.96))] p-4 shadow-[var(--shadow-md)] sm:p-5">
-                   <div className="rounded-[1.25rem] border border-[var(--line)] bg-[linear-gradient(135deg,rgba(17,31,53,0.94),rgba(10,18,31,0.92))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
-                    <div className="flex items-center justify-between gap-3">
-                        <div className="font-mono text-[0.72rem] uppercase tracking-[0.22em] text-[var(--muted-ink)]">
+                  <article
+                    key={turn.id}
+                    className='turn-card rounded-[1.5rem] border border-[var(--line)] bg-[linear-gradient(180deg,rgba(13,23,40,0.98),rgba(9,17,31,0.96))] p-4 shadow-[var(--shadow-md)] sm:p-5'
+                  >
+                    <div className='rounded-[1.25rem] border border-[var(--line)] bg-[linear-gradient(135deg,rgba(17,31,53,0.94),rgba(10,18,31,0.92))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]'>
+                      <div className='flex items-center justify-between gap-3'>
+                        <div className='font-mono text-[0.72rem] uppercase tracking-[0.22em] text-[var(--muted-ink)]'>
                           User prompt
                         </div>
                         <button
-                          type="button"
-                          onClick={() => saveTurnToSession(turn, systemPrompt, schemaText)}
-                          className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-[var(--line)] bg-[var(--panel-frost)] px-3 py-1.5 text-[0.72rem] font-medium uppercase tracking-[0.18em] text-[var(--muted-ink)] transition hover:border-[var(--line-strong)] hover:bg-[var(--canvas-strong)] hover:text-[var(--ink)] active:scale-[0.98]"
+                          type='button'
+                          onClick={() =>
+                            saveTurnToSession(turn, systemPrompt, schemaText)
+                          }
+                          className='inline-flex min-h-9 items-center gap-1.5 rounded-full border border-[var(--line)] bg-[var(--panel-frost)] px-3 py-1.5 text-[0.72rem] font-medium uppercase tracking-[0.18em] text-[var(--muted-ink)] transition hover:border-[var(--line-strong)] hover:bg-[var(--canvas-strong)] hover:text-[var(--ink)] active:scale-[0.98]'
                         >
-                          <Save aria-hidden="true" className="h-3.5 w-3.5" />
+                          <Save aria-hidden='true' className='h-3.5 w-3.5' />
                           Save turn
                         </button>
-                        <CompareButton turnId={turn.id} responseKeys={turnResponses.map((r) => r.key)} />
+                        <CompareButton
+                          turnId={turn.id}
+                          responseKeys={turnResponses.map((r) => r.key)}
+                        />
                       </div>
-                      <p className="mt-3 max-h-48 overflow-y-auto whitespace-pre-wrap break-words text-[1.02rem] leading-7 text-[var(--ink)]">
+                      <p className='mt-3 max-h-48 overflow-y-auto whitespace-pre-wrap break-words text-[1.02rem] leading-7 text-[var(--ink)]'>
                         {turn.prompt}
                       </p>
-                    <div className="mt-4 flex flex-wrap items-center gap-2 font-mono text-[0.68rem] uppercase tracking-[0.18em] text-[var(--muted-ink)]">
-                       <span className="rounded-full border border-[var(--line)] bg-[var(--panel-frost)] px-3 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
-                        total $ {hasEstimatedCost ? formatUsd(totalEstimatedCost) : "-"}
-                      </span>
-                      {turn.validator ? (
-                         <span className="rounded-full border border-[var(--line)] bg-[var(--panel-frost)] px-3 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
-                          schema {turn.validator.label}
+                      <div className='mt-4 flex flex-wrap items-center gap-2 font-mono text-[0.68rem] uppercase tracking-[0.18em] text-[var(--muted-ink)]'>
+                        <span className='rounded-full border border-[var(--line)] bg-[var(--panel-frost)] px-3 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]'>
+                          total ${" "}
+                          {hasEstimatedCost ?
+                            formatUsd(totalEstimatedCost)
+                          : "-"}
                         </span>
-                      ) : null}
-                      {turn.validator ? (
-                         <span className="rounded-full border border-[color:rgba(56,211,159,0.22)] bg-[color:rgba(56,211,159,0.12)] px-3 py-2 text-[var(--success)] shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]">
-                          pass {passedCount}
-                        </span>
-                      ) : null}
-                      {turn.validator ? (
-                         <span className="rounded-full border border-[color:rgba(255,107,146,0.22)] bg-[color:rgba(255,107,146,0.12)] px-3 py-2 text-[var(--danger)] shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]">
-                          fail {failedCount}
-                        </span>
-                      ) : null}
-                      {hiddenCount > 0 ? (
-                         <span className="rounded-full border border-[var(--line)] bg-[var(--canvas-soft)] px-3 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]">
-                          hidden {hiddenCount}
-                        </span>
-                      ) : null}
+                        {turn.validator ?
+                          <span className='rounded-full border border-[var(--line)] bg-[var(--panel-frost)] px-3 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]'>
+                            schema {turn.validator.label}
+                          </span>
+                        : null}
+                        {turn.validator ?
+                          <span className='rounded-full border border-[color:rgba(56,211,159,0.22)] bg-[color:rgba(56,211,159,0.12)] px-3 py-2 text-[var(--success)] shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]'>
+                            pass {passedCount}
+                          </span>
+                        : null}
+                        {turn.validator ?
+                          <span className='rounded-full border border-[color:rgba(255,107,146,0.22)] bg-[color:rgba(255,107,146,0.12)] px-3 py-2 text-[var(--danger)] shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]'>
+                            fail {failedCount}
+                          </span>
+                        : null}
+                        {hiddenCount > 0 ?
+                          <span className='rounded-full border border-[var(--line)] bg-[var(--canvas-soft)] px-3 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]'>
+                            hidden {hiddenCount}
+                          </span>
+                        : null}
+                      </div>
                     </div>
-                  </div>
 
-                  {visibleResponses.length === 0 ? (
-                     <div className="mt-4 rounded-[1.25rem] border border-dashed border-[var(--line)] bg-[color:rgba(13,23,40,0.82)] p-5 text-sm leading-7 text-[var(--muted-ink)]">
-                      No successful responses match this turn yet.
-                    </div>
-                  ) : (
-                    <ResponseDataTable
-                      turn={turn}
-                      turnId={turn.id}
-                      responses={visibleResponses}
-                    />
-                  )}
-                </article>
+                    {visibleResponses.length === 0 ?
+                      <div className='mt-4 rounded-[1.25rem] border border-dashed border-[var(--line)] bg-[color:rgba(13,23,40,0.82)] p-5 text-sm leading-7 text-[var(--muted-ink)]'>
+                        No successful responses match this turn yet.
+                      </div>
+                    : <ResponseDataTable
+                        turn={turn}
+                        turnId={turn.id}
+                        responses={visibleResponses}
+                      />
+                    }
+                  </article>
                 );
               })}
             </div>
-
           </section>
         </section>
+
+        <section className='mt-6 rounded-[2rem] border border-[var(--line)] bg-[var(--panel)] p-6 shadow-[var(--shadow-lg)] backdrop-blur sm:p-8'>
+          <div className='max-w-3xl space-y-4'>
+            <span className='inline-flex min-h-11 items-center rounded-full border border-[var(--line)] bg-[color:rgba(10,18,31,0.74)] px-4 py-2 font-mono text-[0.72rem] uppercase tracking-[0.24em] text-[var(--accent)] shadow-[0_0_0_1px_rgba(78,203,255,0.05)]'>
+              MCP Server
+            </span>
+            <h2 className='text-3xl font-semibold tracking-[-0.04em] sm:text-4xl'>
+              Connect your agent.
+            </h2>
+            <p className='text-base leading-7 text-[var(--ink-soft)] sm:text-lg'>
+              crv.sh exposes every eval tool as an MCP server. Point any
+              MCP-compatible client at the remote endpoint and your agent can
+              list models, run evals, validate outputs, and repair prompts — no
+              UI required.
+            </p>
+          </div>
+
+          <div className='mt-8 grid gap-6 lg:grid-cols-2'>
+            <div className='space-y-4'>
+              <div className='rounded-[1.25rem] border border-[var(--line)] bg-[linear-gradient(180deg,rgba(13,23,40,0.98),rgba(9,17,31,0.98))] p-5 shadow-[var(--shadow-md)]'>
+                <div className='flex items-center gap-3'>
+                  <div className='flex h-8 w-8 items-center justify-center rounded-full bg-[color:rgba(78,203,255,0.12)] text-[var(--accent)]'>
+                    <span className='text-sm font-bold'>1</span>
+                  </div>
+                  <h3 className='text-lg font-semibold'>Remote endpoint</h3>
+                </div>
+                <p className='mt-3 text-sm leading-6 text-[var(--ink-soft)]'>
+                  The MCP server is available at:
+                </p>
+                <div className='mt-2 flex items-center gap-2'>
+                  <code className='flex-1 rounded-xl border border-[var(--line)] bg-[var(--canvas-soft)] px-4 py-3 font-mono text-sm text-[var(--accent)]'>
+                    {origin ? `${origin}/api/mcp` : "/api/mcp"}
+                  </code>
+                  <button
+                    type='button'
+                    onClick={() => {
+                      const url = `${window.location.origin}/api/mcp`;
+                      void navigator.clipboard.writeText(url);
+                    }}
+                    className='inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-[var(--line)] bg-[var(--panel-strong)] text-[var(--muted-ink)] transition hover:border-[var(--line-strong)] hover:text-[var(--ink)] active:scale-[0.96]'
+                    aria-label='Copy URL'
+                  >
+                    <svg
+                      className='h-4 w-4'
+                      fill='none'
+                      viewBox='0 0 24 24'
+                      strokeWidth={1.5}
+                      stroke='currentColor'
+                    >
+                      <path
+                        strokeLinecap='round'
+                        strokeLinejoin='round'
+                        d='M15.666 3.888A2.25 2.25 0 0 0 13.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 0 1-.75.75H9.75a.75.75 0 0 1-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 0 1-2.25 2.25H6.75A2.25 2.25 0 0 1 4.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 0 1 1.927-.184'
+                      />
+                    </svg>
+                  </button>
+                </div>
+                <p className='mt-3 text-sm leading-6 text-[var(--muted-ink)]'>
+                  Stateless HTTP transport — every request is self-contained. No
+                  session management needed.
+                </p>
+              </div>
+
+              <div className='rounded-[1.25rem] border border-[var(--line)] bg-[linear-gradient(180deg,rgba(13,23,40,0.98),rgba(9,17,31,0.98))] p-5 shadow-[var(--shadow-md)]'>
+                <div className='flex items-center gap-3'>
+                  <div className='flex h-8 w-8 items-center justify-center rounded-full bg-[color:rgba(78,203,255,0.12)] text-[var(--accent)]'>
+                    <span className='text-sm font-bold'>2</span>
+                  </div>
+                  <h3 className='text-lg font-semibold'>Available tools</h3>
+                </div>
+                <div className='mt-3 space-y-2'>
+                  {[
+                    {
+                      name: "list_models",
+                      desc: "Browse models with pricing & context windows",
+                    },
+                    {
+                      name: "eval_prompt",
+                      desc: "Run a prompt against selected models",
+                    },
+                    {
+                      name: "eval_batch",
+                      desc: "Run against ALL models in one call",
+                    },
+                    {
+                      name: "eval_suite",
+                      desc: "Multi-test-case pass/fail matrix",
+                    },
+                    {
+                      name: "eval_rank",
+                      desc: "Rank models by composite score",
+                    },
+                    {
+                      name: "eval_consistency",
+                      desc: "Detect flaky models with N repeated runs",
+                    },
+                    {
+                      name: "validate_output",
+                      desc: "Check a response against JSON schema",
+                    },
+                    {
+                      name: "suggest_system_prompt",
+                      desc: "Auto-repair a failing system prompt",
+                    },
+                  ].map((tool) => (
+                    <div
+                      key={tool.name}
+                      className='flex items-baseline gap-3 rounded-xl border border-[var(--line)] bg-[var(--canvas-soft)] px-3 py-2'
+                    >
+                      <code className='shrink-0 font-mono text-xs text-[var(--accent)]'>
+                        {tool.name}
+                      </code>
+                      <span className='text-sm text-[var(--muted-ink)]'>
+                        {tool.desc}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className='space-y-4'>
+              <div className='rounded-[1.25rem] border border-[var(--line)] bg-[linear-gradient(180deg,rgba(13,23,40,0.98),rgba(9,17,31,0.98))] p-5 shadow-[var(--shadow-md)]'>
+                <div className='flex items-center gap-3'>
+                  <div className='flex h-8 w-8 items-center justify-center rounded-full bg-[color:rgba(78,203,255,0.12)] text-[var(--accent)]'>
+                    <span className='text-sm font-bold'>3</span>
+                  </div>
+                  <h3 className='text-lg font-semibold'>Client config</h3>
+                </div>
+                <p className='mt-3 text-sm leading-6 text-[var(--ink-soft)]'>
+                  Add this to your MCP client config. Works with Amp, Claude
+                  Code, Cursor, Windsurf, and any Streamable HTTP MCP client.
+                </p>
+                <div className='mt-3 rounded-xl border border-[var(--line)] bg-[var(--canvas-soft)] p-4'>
+                  <pre className='overflow-x-auto font-mono text-sm leading-6 text-[var(--ink)]'>
+                    {`{
+  "mcpServers": {
+    "crv": {
+      "type": "url",
+      "url": "${origin ? `${origin}/api/mcp` : "https://crv.sh/api/mcp"}",
+      "headers": {
+        "Authorization": "Bearer sk-or-..."
+      }
+    }
+  }
+}`}
+                  </pre>
+                </div>
+                <p className='mt-3 text-sm leading-6 text-[var(--muted-ink)]'>
+                  Send your OpenRouter key with{" "}
+                  <code className='font-mono text-xs'>
+                    Authorization: Bearer sk-or-...
+                  </code>
+                  .
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
       </div>
-      {isSchemaEditorOpen ? (
+      {isSchemaEditorOpen ?
         <SchemaEditorDialog
           initialSchema={editorInitialSchema}
           onClose={() => setIsSchemaEditorOpen(false)}
@@ -1558,65 +1992,110 @@ export function EvalStudio({ catalog, initialSelections }: EvalStudioProps) {
             setIsSchemaEditorOpen(false);
           }}
         />
-      ) : null}
-      {compareDialogTurnId && compareDialogResponses.length >= 2 ? (
+      : null}
+      {compareDialogTurnId && compareDialogResponses.length >= 2 ?
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-[color:rgba(0,0,0,0.72)] backdrop-blur-sm"
+          className='fixed inset-0 z-50 flex items-center justify-center bg-[color:rgba(0,0,0,0.72)] backdrop-blur-sm'
           onClick={(e) => {
             if (e.target === e.currentTarget) closeCompareDialog();
           }}
         >
-          <div className="relative mx-4 flex max-h-[90vh] w-full max-w-6xl flex-col overflow-hidden rounded-[1.75rem] border border-[var(--line)] bg-[var(--panel)] shadow-[var(--shadow-lg)]">
-            <div className="flex items-center justify-between gap-3 border-b border-[var(--line)] px-6 py-4">
+          <div className='relative mx-4 flex max-h-[90vh] w-full max-w-6xl flex-col overflow-hidden rounded-[1.75rem] border border-[var(--line)] bg-[var(--panel)] shadow-[var(--shadow-lg)]'>
+            <div className='flex items-center justify-between gap-3 border-b border-[var(--line)] px-6 py-4'>
               <div>
-                <p className="font-mono text-[0.72rem] uppercase tracking-[0.22em] text-[var(--muted-ink)]">
+                <p className='font-mono text-[0.72rem] uppercase tracking-[0.22em] text-[var(--muted-ink)]'>
                   Comparison
                 </p>
-                <h2 className="mt-1 text-lg font-semibold tracking-[-0.03em]">
+                <h2 className='mt-1 text-lg font-semibold tracking-[-0.03em]'>
                   {compareDialogResponses.length} model calls side by side
                 </h2>
               </div>
               <button
-                type="button"
+                type='button'
                 onClick={() => closeCompareDialog()}
-                className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full text-[var(--muted-ink)] transition hover:bg-[color:rgba(255,255,255,0.05)]"
-                aria-label="Close comparison"
+                className='inline-flex min-h-11 min-w-11 items-center justify-center rounded-full text-[var(--muted-ink)] transition hover:bg-[color:rgba(255,255,255,0.05)]'
+                aria-label='Close comparison'
               >
-                <X aria-hidden="true" className="h-5 w-5" />
+                <X aria-hidden='true' className='h-5 w-5' />
               </button>
             </div>
 
-            <div className="overflow-x-auto overflow-y-auto p-6">
-              <table className="min-w-full border-collapse text-left text-sm">
-                <thead className="text-[var(--muted-ink)]">
+            <div className='overflow-x-auto overflow-y-auto p-6'>
+              <table className='min-w-full border-collapse text-left text-sm'>
+                <thead className='text-[var(--muted-ink)]'>
                   <tr>
-                    <th className="px-4 py-3 font-mono text-[0.68rem] uppercase tracking-[0.18em]">Metric</th>
+                    <th className='px-4 py-3 font-mono text-[0.68rem] uppercase tracking-[0.18em]'>
+                      Metric
+                    </th>
                     {compareDialogResponses.map((r) => (
-                      <th key={r.key} className="px-4 py-3 font-mono text-[0.68rem] uppercase tracking-[0.18em]">
+                      <th
+                        key={r.key}
+                        className='px-4 py-3 font-mono text-[0.68rem] uppercase tracking-[0.18em]'
+                      >
                         <div>{r.providerName}</div>
-                        <div className="mt-1 font-semibold text-[var(--ink)]">{r.label}</div>
+                        <div className='mt-1 font-semibold text-[var(--ink)]'>
+                          {r.label}
+                        </div>
                       </th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {[
-                    { label: "Status", render: (r: ModelResponse) => statusMeta(r.status).label },
-                    { label: "TTFT", render: (r: ModelResponse) => formatDuration(r.ttftMs) },
-                    { label: "Total", render: (r: ModelResponse) => formatDuration(r.durationMs) },
-                    { label: "Cost", render: (r: ModelResponse) => formatUsd(r.estimatedCost) },
-                    { label: "Prompt tokens", render: (r: ModelResponse) => formatTokenCount(r.promptTokens) },
-                    { label: "Completion tokens", render: (r: ModelResponse) => formatTokenCount(r.completionTokens) },
-                    { label: "Total tokens", render: (r: ModelResponse) => formatTokenCount(r.totalTokens) },
-                    { label: "Finish reason", render: (r: ModelResponse) => r.finishReason ?? "-" },
-                    { label: "Validation", render: (r: ModelResponse) => validationMeta(r.validation).label },
+                    {
+                      label: "Status",
+                      render: (r: ModelResponse) => statusMeta(r.status).label,
+                    },
+                    {
+                      label: "TTFT",
+                      render: (r: ModelResponse) => formatDuration(r.ttftMs),
+                    },
+                    {
+                      label: "Total",
+                      render: (r: ModelResponse) =>
+                        formatDuration(r.durationMs),
+                    },
+                    {
+                      label: "Cost",
+                      render: (r: ModelResponse) => formatUsd(r.estimatedCost),
+                    },
+                    {
+                      label: "Prompt tokens",
+                      render: (r: ModelResponse) =>
+                        formatTokenCount(r.promptTokens),
+                    },
+                    {
+                      label: "Completion tokens",
+                      render: (r: ModelResponse) =>
+                        formatTokenCount(r.completionTokens),
+                    },
+                    {
+                      label: "Total tokens",
+                      render: (r: ModelResponse) =>
+                        formatTokenCount(r.totalTokens),
+                    },
+                    {
+                      label: "Finish reason",
+                      render: (r: ModelResponse) => r.finishReason ?? "-",
+                    },
+                    {
+                      label: "Validation",
+                      render: (r: ModelResponse) =>
+                        validationMeta(r.validation).label,
+                    },
                   ].map((metric) => (
-                    <tr key={metric.label} className="border-t border-[var(--line)]">
-                      <td className="whitespace-nowrap px-4 py-3 font-mono text-[0.68rem] uppercase tracking-[0.18em] text-[var(--muted-ink)]">
+                    <tr
+                      key={metric.label}
+                      className='border-t border-[var(--line)]'
+                    >
+                      <td className='whitespace-nowrap px-4 py-3 font-mono text-[0.68rem] uppercase tracking-[0.18em] text-[var(--muted-ink)]'>
                         {metric.label}
                       </td>
                       {compareDialogResponses.map((r) => (
-                        <td key={r.key} className="whitespace-nowrap px-4 py-3 font-mono text-sm text-[var(--ink)]">
+                        <td
+                          key={r.key}
+                          className='whitespace-nowrap px-4 py-3 font-mono text-sm text-[var(--ink)]'
+                        >
                           {metric.render(r)}
                         </td>
                       ))}
@@ -1625,27 +2104,38 @@ export function EvalStudio({ catalog, initialSelections }: EvalStudioProps) {
                 </tbody>
               </table>
 
-              <div className="mt-6 grid gap-4" style={{ gridTemplateColumns: `repeat(${compareDialogResponses.length}, minmax(0, 1fr))` }}>
+              <div
+                className='mt-6 grid gap-4'
+                style={{
+                  gridTemplateColumns: `repeat(${compareDialogResponses.length}, minmax(0, 1fr))`,
+                }}
+              >
                 {compareDialogResponses.map((r) => (
-                  <div key={r.key} className="flex flex-col rounded-[1.25rem] border border-[var(--line)] bg-[linear-gradient(180deg,rgba(10,18,31,0.98),rgba(13,23,40,0.98))]">
-                    <div className="border-b border-[var(--line)] px-4 py-3">
-                      <div className="font-mono text-[0.68rem] uppercase tracking-[0.18em] text-[var(--muted-ink)]">
+                  <div
+                    key={r.key}
+                    className='flex flex-col rounded-[1.25rem] border border-[var(--line)] bg-[linear-gradient(180deg,rgba(10,18,31,0.98),rgba(13,23,40,0.98))]'
+                  >
+                    <div className='border-b border-[var(--line)] px-4 py-3'>
+                      <div className='font-mono text-[0.68rem] uppercase tracking-[0.18em] text-[var(--muted-ink)]'>
                         {r.providerName}
                       </div>
-                      <div className="mt-1 font-semibold text-[var(--ink)]">{r.label}</div>
+                      <div className='mt-1 font-semibold text-[var(--ink)]'>
+                        {r.label}
+                      </div>
                     </div>
-                    <div className="max-h-[28rem] overflow-y-auto p-4">
-                      {r.error ? (
-                        <p className="whitespace-pre-wrap break-words text-sm leading-7 text-[var(--danger)]">
+                    <div className='max-h-[28rem] overflow-y-auto p-4'>
+                      {r.error ?
+                        <p className='whitespace-pre-wrap break-words text-sm leading-7 text-[var(--danger)]'>
                           {r.error}
                         </p>
-                      ) : r.content ? (
-                        <p className="whitespace-pre-wrap break-words text-sm leading-7 text-[var(--ink)]">
+                      : r.content ?
+                        <p className='whitespace-pre-wrap break-words text-sm leading-7 text-[var(--ink)]'>
                           {r.content}
                         </p>
-                      ) : (
-                        <p className="text-sm text-[var(--muted-ink)]">No content</p>
-                      )}
+                      : <p className='text-sm text-[var(--muted-ink)]'>
+                          No content
+                        </p>
+                      }
                     </div>
                   </div>
                 ))}
@@ -1653,7 +2143,7 @@ export function EvalStudio({ catalog, initialSelections }: EvalStudioProps) {
             </div>
           </div>
         </div>
-      ) : null}
+      : null}
     </main>
   );
 }

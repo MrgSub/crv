@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { IBM_Plex_Mono, Manrope } from "next/font/google";
 
+import { OG_ALT, OG_SIZE } from "@/lib/og-image";
+
 import "./globals.css";
 
 const sans = Manrope({
@@ -15,8 +17,32 @@ const mono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AI Eval Studio",
-  description: "Compare streamed responses across OpenRouter models with live time and cost estimates.",
+  title: "crv.sh — Connect your agent",
+  description:
+    "Connect any MCP-compatible client to crv.sh and run model eval, validation, and prompt repair tools over HTTP.",
+  metadataBase: new URL("https://crv.sh"),
+  openGraph: {
+    title: "crv.sh — Connect your agent",
+    description:
+      "Connect any MCP-compatible client to crv.sh and run model eval, validation, and prompt repair tools over HTTP.",
+    siteName: "crv.sh",
+    type: "website",
+    images: [
+      {
+        url: "/opengraph-image",
+        width: OG_SIZE.width,
+        height: OG_SIZE.height,
+        alt: OG_ALT,
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "crv.sh — Connect your agent",
+    description:
+      "Connect any MCP-compatible client to crv.sh and run model eval, validation, and prompt repair tools over HTTP.",
+    images: ["/twitter-image"],
+  },
 };
 
 export const viewport: Viewport = {
@@ -29,9 +55,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang='en'>
       <body className={`${sans.variable} ${mono.variable} antialiased`}>
-        <a className="skip-link" href="#main-content">
+        <a className='skip-link' href='#main-content'>
           Skip to Main Content
         </a>
         {children}

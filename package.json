@@ -1,13 +1,15 @@
 {
-  "name": "studio",
+  "name": "crv.sh",
   "version": "1.0.0",
   "private": true,
-  "description": "AI Eval Studio",
+  "description": "crv.sh — Stay ahead of the curve. Multi-model LLM eval studio.",
   "scripts": {
     "dev": "PORT=1339 next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "ci": "npm run lint && npm run build",
+    "mcp": "npx tsx mcp-server.ts"
   },
   "keywords": [
     "nextjs",
@@ -15,7 +17,11 @@
     "llm-evals"
   ],
   "license": "MIT",
+  "engines": {
+    "node": ">=20.9.0"
+  },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.27.1",
     "@openrouter/ai-sdk-provider": "^2.3.3",
     "@tanstack/react-table": "^8.21.3",
     "ai": "^6.0.116",

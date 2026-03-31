@@ -4,6 +4,11 @@ import { z } from "zod";
 
 import { getCatalog } from "@/lib/catalog";
 import { createOpenRouterClient, getOpenRouterUsage } from "@/lib/openrouter";
+import {
+  getOpenRouterApiKey,
+  MISSING_OPENROUTER_API_KEY_MESSAGE,
+} from "@/lib/openrouter-auth";
+import { parseRequestJson } from "@/lib/parse-request-json";
 import { estimateCost } from "@/lib/pricing";
 
 export const maxDuration = 120;
@@ -27,23 +32,34 @@ const requestSchema = z.object({
     )
     .min(1),
   timeoutMs: z.number().int().min(500).max(300_000).optional(),
-  openRouterApiKey: z.string().max(500).optional(),
+  providerRouting: z
+    .object({
+      order: z.array(z.string()).optional(),
+      allow_fallbacks: z.boolean().optional(),
+      require_parameters: z.boolean().optional(),
+      data_collection: z.string().optional(),
+      only: z.array(z.string()).optional(),
+      ignore: z.array(z.string()).optional(),
+      quantizations: z.array(z.string()).optional(),
+      sort: z.string().optional(),
+    })
+    .optional(),
 });
 
 type ResponseEvent =
   | { type: "model-start"; modelKey: string }
   | { type: "model-chunk"; modelKey: string; delta: string; elapsedMs: number }
   | {
-    type: "model-finish";
-    modelKey: string;
-    durationMs: number;
-    ttftMs?: number;
-    promptTokens?: number;
-    completionTokens?: number;
-    totalTokens?: number;
-    estimatedCost?: number;
-    finishReason?: string | null;
-  }
+      type: "model-finish";
+      modelKey: string;
+      durationMs: number;
+      ttftMs?: number;
+      promptTokens?: number;
+      completionTokens?: number;
+      totalTokens?: number;
+      estimatedCost?: number;
+      finishReason?: string | null;
+    }
   | { type: "model-error"; modelKey: string; error: string; durationMs: number }
   | { type: "batch-finish" };
 
@@ -53,7 +69,10 @@ function toModelMessages(
   modelKey: string,
   prompt: string,
 ) {
-  const messages: Array<{ role: "system" | "user" | "assistant"; content: string }> = [];
+  const messages: Array<{
+    role: "system" | "user" | "assistant";
+    content: string;
+  }> = [];
 
   if (systemPrompt.trim()) {
     messages.push({ role: "system", content: systemPrompt.trim() });
@@ -85,8 +104,19 @@ async function streamOpenRouterModel(args: {
   title: string;
   pricing?: { inputCost?: number; outputCost?: number };
   abortSignal?: AbortSignal;
+  providerRouting?: Record<string, unknown>;
 }) {
-  const { modelKey, messages, send, apiKey, referer, title, pricing, abortSignal } = args;
+  const {
+    modelKey,
+    messages,
+    send,
+    apiKey,
+    referer,
+    title,
+    pricing,
+    abortSignal,
+    providerRouting,
+  } = args;
   const startedAt = Date.now();
   let firstTokenAt: number | undefined;
 
@@ -96,6 +126,7 @@ async function streamOpenRouterModel(args: {
   const result = streamText({
     model: openrouter(modelKey, {
       usage: { include: true },
+      ...(providerRouting ? { provider: providerRouting } : {}),
     }),
     messages,
     abortSignal,
@@ -140,19 +171,25 @@ async function streamOpenRouterModel(args: {
 }
 
 export async function POST(request: Request) {
-  const payload = requestSchema.parse(await request.json());
-  const apiKey = payload.openRouterApiKey?.trim() || process.env.OPENROUTER_API_KEY;
+  const parsed = await parseRequestJson(request, requestSchema);
+  if (!parsed.ok) {
+    return parsed.response;
+  }
+  const payload = parsed.data;
+  const apiKey = getOpenRouterApiKey(request.headers);
 
   if (!apiKey) {
     return NextResponse.json(
-      { error: "No OpenRouter API key provided. Add one in settings or set OPENROUTER_API_KEY on the server." },
-      { status: 400 },
+      { error: MISSING_OPENROUTER_API_KEY_MESSAGE },
+      { status: 401 },
     );
   }
   const catalog = await getCatalog();
-  const catalogByKey = new Map(catalog.models.map((model) => [model.key, model]));
+  const catalogByKey = new Map(
+    catalog.models.map((model) => [model.key, model]),
+  );
   const referer = request.headers.get("origin") ?? "http://localhost:3000";
-  const title = "AI Eval Studio";
+  const title = "crv.sh";
 
   const stream = new ReadableStream<Uint8Array>({
     start(controller) {
@@ -205,8 +242,9 @@ export async function POST(request: Request) {
             );
 
             const startedAt = Date.now();
-            const abortSignal = payload.timeoutMs
-              ? AbortSignal.timeout(payload.timeoutMs)
+            const abortSignal =
+              payload.timeoutMs ?
+                AbortSignal.timeout(payload.timeoutMs)
               : undefined;
 
             try {
@@ -222,15 +260,15 @@ export async function POST(request: Request) {
                   outputCost: catalogModel.outputCost,
                 },
                 abortSignal,
+                providerRouting: payload.providerRouting,
               });
             } catch (error) {
               const isTimeout =
                 error instanceof DOMException && error.name === "TimeoutError";
-              const message = isTimeout
-                ? `Timed out after ${payload.timeoutMs! / 1000}s`
-                : error instanceof Error
-                  ? error.message
-                  : "The model request failed.";
+              const message =
+                isTimeout ? `Timed out after ${payload.timeoutMs! / 1000}s`
+                : error instanceof Error ? error.message
+                : "The model request failed.";
 
               send({
                 type: "model-error",

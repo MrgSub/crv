@@ -3,6 +3,11 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { createOpenRouterClient } from "@/lib/openrouter";
+import {
+  getOpenRouterApiKey,
+  MISSING_OPENROUTER_API_KEY_MESSAGE,
+} from "@/lib/openrouter-auth";
+import { parseRequestJson } from "@/lib/parse-request-json";
 
 export const maxDuration = 60;
 
@@ -15,17 +20,20 @@ const requestSchema = z.object({
   responseError: z.string().max(20_000).optional(),
   validationMessage: z.string().max(2_000).optional(),
   validationIssues: z.array(z.string().max(2_000)).max(50).optional(),
-  openRouterApiKey: z.string().max(500).optional(),
 });
 
 export async function POST(request: Request) {
-  const payload = requestSchema.parse(await request.json());
-  const apiKey = payload.openRouterApiKey?.trim() || process.env.OPENROUTER_API_KEY;
+  const parsed = await parseRequestJson(request, requestSchema);
+  if (!parsed.ok) {
+    return parsed.response;
+  }
+  const payload = parsed.data;
+  const apiKey = getOpenRouterApiKey(request.headers);
 
   if (!apiKey) {
     return NextResponse.json(
-      { error: "No OpenRouter API key provided. Add one in settings or set OPENROUTER_API_KEY on the server." },
-      { status: 400 },
+      { error: MISSING_OPENROUTER_API_KEY_MESSAGE },
+      { status: 401 },
     );
   }
   const referer = request.headers.get("origin") ?? "http://localhost:3000";
@@ -34,7 +42,7 @@ export async function POST(request: Request) {
     const provider = createOpenRouterClient({
       apiKey,
       referer,
-      title: "AI Eval Studio - Prompt Repair",
+      title: "crv.sh — Prompt Repair",
     });
 
     const { text } = await generateText({
@@ -47,15 +55,21 @@ export async function POST(request: Request) {
         "",
         `Current system prompt:\n${payload.systemPrompt || "(empty)"}`,
         "",
-        payload.schemaText?.trim() ? `\nRequired JSON schema:\n${payload.schemaText.trim()}` : "",
-        payload.validationMessage ? `\nValidation summary:\n${payload.validationMessage}` : "",
-        payload.validationIssues?.length
-          ? `\nValidation issues:\n- ${payload.validationIssues.join("\n- ")}`
-          : "",
-        payload.responseContent?.trim()
-          ? `\nModel output that failed:\n${payload.responseContent.trim()}`
-          : "",
-        payload.responseError?.trim() ? `\nRun error:\n${payload.responseError.trim()}` : "",
+        payload.schemaText?.trim() ?
+          `\nRequired JSON schema:\n${payload.schemaText.trim()}`
+        : "",
+        payload.validationMessage ?
+          `\nValidation summary:\n${payload.validationMessage}`
+        : "",
+        payload.validationIssues?.length ?
+          `\nValidation issues:\n- ${payload.validationIssues.join("\n- ")}`
+        : "",
+        payload.responseContent?.trim() ?
+          `\nModel output that failed:\n${payload.responseContent.trim()}`
+        : "",
+        payload.responseError?.trim() ?
+          `\nRun error:\n${payload.responseError.trim()}`
+        : "",
         "\nRequirements for the rewritten prompt:",
         "- Preserve the user's core task.",
         "- Be concrete about output format and compliance.",
@@ -81,7 +95,9 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         error:
-          error instanceof Error ? error.message : "Failed to generate a suggested system prompt.",
+          error instanceof Error ?
+            error.message
+          : "Failed to generate a suggested system prompt.",
       },
       { status: 500 },
     );
